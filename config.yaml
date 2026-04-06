@@ -1,0 +1,62 @@
+# TravelClaw - AI Travel Planning Team Configuration
+# Inspired by OpenClaw's config-first multi-agent architecture
+
+team:
+  name: "TravelClaw"
+  description: "AI旅行规划团队 — 吃住行游购娱一站式智能规划"
+  version: "0.1.0"
+
+# 模型配置
+model:
+  provider: "anthropic"
+  default: "claude-sonnet-4-6"
+  orchestrator: "claude-sonnet-4-6"
+
+# Agent注册表（类似OpenClaw的agents.list）
+agents:
+  planner:
+    role: "orchestrator"
+    workspace: "./agents/planner"
+    description: "总规划师 — 行程规划调度中枢"
+
+  food:
+    role: "specialist"
+    workspace: "./agents/food"
+    description: "美食顾问 — 餐饮推荐专家"
+    domain: "吃"
+
+  hotel:
+    role: "specialist"
+    workspace: "./agents/hotel"
+    description: "住宿顾问 — 酒店民宿专家"
+    domain: "住"
+
+  transport:
+    role: "specialist"
+    workspace: "./agents/transport"
+    description: "交通顾问 — 出行路线专家"
+    domain: "行"
+
+  attraction:
+    role: "specialist"
+    workspace: "./agents/attraction"
+    description: "景点顾问 — 游览推荐专家"
+    domain: "游"
+
+  shopping:
+    role: "specialist"
+    workspace: "./agents/shopping"
+    description: "购物顾问 — 特产伴手礼专家"
+    domain: "购"
+
+  entertainment:
+    role: "specialist"
+    workspace: "./agents/entertainment"
+    description: "娱乐顾问 — 休闲体验专家"
+    domain: "娱"
+
+# 路由规则（类似OpenClaw的bindings）
+routing:
+  strategy: "orchestrator-dispatch"
+  # 所有用户请求先进入总规划师，由其拆解后分发
+  entry_point: "planner"
