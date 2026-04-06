@@ -33,6 +33,22 @@ def main():
         help="使用异步并行模式（专家Agent并行执行）",
     )
     parser.add_argument(
+        "--serve",
+        action="store_true",
+        help="启动FastAPI Web服务",
+    )
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="服务绑定地址 (默认: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="服务端口 (默认: 8000)",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -51,6 +67,13 @@ def main():
     if not config_path.exists():
         print(f"错误: 找不到配置文件 {config_path}")
         sys.exit(1)
+
+    if args.serve:
+        import uvicorn
+        from .api.app import create_app
+        app = create_app(config_path=str(config_path))
+        uvicorn.run(app, host=args.host, port=args.port)
+        return
 
     team = TravelTeam(config_path)
 
