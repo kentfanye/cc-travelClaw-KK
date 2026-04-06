@@ -8,9 +8,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlmodel import SQLModel
 from starlette.testclient import TestClient
 
 from travelclaw.api.app import create_app
+from travelclaw.api.routes import get_db_session
 from travelclaw.models import EventType, PlanEvent, PlanResponse, TaskResult, TravelRequest
 from travelclaw.team import TravelTeam
 
@@ -19,11 +23,22 @@ CONFIG_PATH = str(PROJECT_ROOT / "config.yaml")
 
 
 @pytest.fixture
-def app():
-    """Create test app with team pre-initialized (bypass lifespan)."""
+async def app():
+    """Create test app with team and in-memory DB."""
     app = create_app(config_path=CONFIG_PATH)
-    # Manually init team since lifespan doesn't run with ASGITransport
     app.state.team = TravelTeam(Path(CONFIG_PATH))
+
+    # In-memory SQLite for tests
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+    async def override_get_session():
+        async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        async with async_session() as session:
+            yield session
+
+    app.dependency_overrides[get_db_session] = override_get_session
     return app
 
 

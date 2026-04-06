@@ -1,6 +1,6 @@
 """
 FastAPI应用工厂。
-Lifespan中初始化TravelTeam，存入app.state。
+Lifespan中初始化TravelTeam + 数据库。
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..logging_config import setup_logging
+from ..storage.database import init_db
 from ..team import TravelTeam
 from .routes import router
 from .ws import ws_router
@@ -24,6 +25,7 @@ def create_app(config_path: str = "config.yaml") -> FastAPI:
     async def lifespan(app: FastAPI):
         setup_logging(level="INFO")
         app.state.team = TravelTeam(Path(config_path))
+        await init_db()
         yield
 
     app = FastAPI(
