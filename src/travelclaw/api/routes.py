@@ -22,6 +22,7 @@ router = APIRouter()
 
 class PlanRequest(BaseModel):
     """API请求体"""
+
     request: str = Field(..., min_length=1, description="旅行规划需求的自然语言描述")
     user_id: str = Field(default="anonymous", description="用户ID")
 
@@ -39,6 +40,7 @@ class PreferenceBody(BaseModel):
 async def get_db_session():
     """获取异步数据库会话"""
     from sqlalchemy.orm import sessionmaker
+
     engine = get_engine()
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with async_session() as session:
@@ -46,6 +48,7 @@ async def get_db_session():
 
 
 # ── Health & Agents ───────────────────────────────────────
+
 
 @router.get("/health", response_model=HealthResponse)
 async def health(request: Request):
@@ -61,8 +64,11 @@ async def list_agents(request: Request):
 
 # ── Plan CRUD ─────────────────────────────────────────────
 
+
 @router.post("/plan", response_model=PlanResponse)
-async def create_plan(body: PlanRequest, request: Request, session: AsyncSession = Depends(get_db_session)):
+async def create_plan(
+    body: PlanRequest, request: Request, session: AsyncSession = Depends(get_db_session)
+):
     """提交旅行规划需求，异步并行调度，自动持久化结果。"""
     team = request.app.state.team
     try:
@@ -81,17 +87,19 @@ async def list_plans(user_id: str = "anonymous", session: AsyncSession = Depends
     """查询用户的行程历史。"""
     repo = TripRepository(session)
     trips = await repo.list_trips(user_id=user_id)
-    return {"trips": [
-        {
-            "id": t.id,
-            "destination": t.destination,
-            "days": t.days,
-            "status": t.status,
-            "duration_ms": t.duration_ms,
-            "created_at": t.created_at.isoformat(),
-        }
-        for t in trips
-    ]}
+    return {
+        "trips": [
+            {
+                "id": t.id,
+                "destination": t.destination,
+                "days": t.days,
+                "status": t.status,
+                "duration_ms": t.duration_ms,
+                "created_at": t.created_at.isoformat(),
+            }
+            for t in trips
+        ]
+    }
 
 
 @router.get("/plan/{plan_id}")
@@ -117,6 +125,7 @@ async def get_plan(plan_id: str, session: AsyncSession = Depends(get_db_session)
 
 # ── User Preferences ─────────────────────────────────────
 
+
 @router.get("/user/{user_id}/preferences")
 async def get_preferences(user_id: str, session: AsyncSession = Depends(get_db_session)):
     repo = PreferenceRepository(session)
@@ -125,7 +134,9 @@ async def get_preferences(user_id: str, session: AsyncSession = Depends(get_db_s
 
 
 @router.put("/user/{user_id}/preferences")
-async def set_preferences(user_id: str, body: PreferenceBody, session: AsyncSession = Depends(get_db_session)):
+async def set_preferences(
+    user_id: str, body: PreferenceBody, session: AsyncSession = Depends(get_db_session)
+):
     repo = PreferenceRepository(session)
     for key, value in body.preferences.items():
         await repo.set_preference(user_id, key, value)

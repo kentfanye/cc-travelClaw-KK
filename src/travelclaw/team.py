@@ -32,8 +32,11 @@ class TravelTeam:
         self.orchestrator: Orchestrator | None = None
         self.agents: dict[str, Agent] = {}
         self._build_team()
-        logger.info("团队组装完成: orchestrator=%s, specialists=%s",
-                     self.orchestrator is not None, list(self.agents.keys()))
+        logger.info(
+            "团队组装完成: orchestrator=%s, specialists=%s",
+            self.orchestrator is not None,
+            list(self.agents.keys()),
+        )
 
     def _load_config(self) -> dict:
         with open(self.config_path, encoding="utf-8") as f:
@@ -82,16 +85,20 @@ class TravelTeam:
         """列出团队所有成员"""
         members = []
         if self.orchestrator:
-            members.append({
-                "id": "planner",
-                "role": "总规划师",
-                "type": "orchestrator",
-            })
+            members.append(
+                {
+                    "id": "planner",
+                    "role": "总规划师",
+                    "type": "orchestrator",
+                }
+            )
         for agent_id in self.agents:
-            members.append({
-                "id": agent_id,
-                "role": self.config["agents"][agent_id].get("description", agent_id),
-                "type": "specialist",
-                "domain": self.config["agents"][agent_id].get("domain", ""),
-            })
+            members.append(
+                {
+                    "id": agent_id,
+                    "role": self.config["agents"][agent_id].get("description", agent_id),
+                    "type": "specialist",
+                    "domain": self.config["agents"][agent_id].get("domain", ""),
+                }
+            )
         return members

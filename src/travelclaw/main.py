@@ -14,11 +14,10 @@ from .team import TravelTeam
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="TravelClaw — AI旅行规划团队"
-    )
+    parser = argparse.ArgumentParser(description="TravelClaw — AI旅行规划团队")
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         default="config.yaml",
         help="团队配置文件路径 (默认: config.yaml)",
     )
@@ -28,7 +27,8 @@ def main():
         help="列出团队所有成员",
     )
     parser.add_argument(
-        "--async", dest="use_async",
+        "--async",
+        dest="use_async",
         action="store_true",
         help="使用异步并行模式（专家Agent并行执行）",
     )
@@ -71,6 +71,7 @@ def main():
     if args.serve:
         import uvicorn
         from .api.app import create_app
+
         app = create_app(config_path=str(config_path))
         uvicorn.run(app, host=args.host, port=args.port)
         return
@@ -102,7 +103,9 @@ def main():
                     response = team.plan(request)
                 print("\n" + "=" * 60)
                 print(response.plan)
-                print(f"\n[plan_id={response.plan_id} | 耗时{response.duration_ms}ms | agents={response.agents_used}]")
+                print(
+                    f"\n[plan_id={response.plan_id} | 耗时{response.duration_ms}ms | agents={response.agents_used}]"
+                )
                 print("=" * 60 + "\n")
         except (KeyboardInterrupt, EOFError):
             print("\n\n再见，祝旅途愉快！")
@@ -115,7 +118,9 @@ def main():
             response = team.plan(request)
         print("\n" + "=" * 60)
         print(response.plan)
-        print(f"\n[plan_id={response.plan_id} | 耗时{response.duration_ms}ms | agents={response.agents_used}]")
+        print(
+            f"\n[plan_id={response.plan_id} | 耗时{response.duration_ms}ms | agents={response.agents_used}]"
+        )
         print("=" * 60)
 
 

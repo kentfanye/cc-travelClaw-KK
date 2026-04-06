@@ -2,9 +2,8 @@
 Phase 2 端到端验证 — FastAPI REST + WebSocket。
 """
 
-import json
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -15,7 +14,7 @@ from starlette.testclient import TestClient
 
 from travelclaw.api.app import create_app
 from travelclaw.api.routes import get_db_session
-from travelclaw.models import EventType, PlanEvent, PlanResponse, TaskResult, TravelRequest
+from travelclaw.models import EventType, PlanEvent, PlanResponse, TravelRequest
 from travelclaw.team import TravelTeam
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -51,6 +50,7 @@ async def client(app):
 
 # ── Health ────────────────────────────────────────────────
 
+
 class TestHealthEndpoint:
     @pytest.mark.asyncio
     async def test_health_returns_ok(self, client):
@@ -63,6 +63,7 @@ class TestHealthEndpoint:
 
 
 # ── Agents ────────────────────────────────────────────────
+
 
 class TestAgentsEndpoint:
     @pytest.mark.asyncio
@@ -79,6 +80,7 @@ class TestAgentsEndpoint:
 
 
 # ── Plan ──────────────────────────────────────────────────
+
 
 class TestPlanEndpoint:
     @pytest.mark.asyncio
@@ -114,18 +116,29 @@ class TestPlanEndpoint:
 
 # ── WebSocket ─────────────────────────────────────────────
 
+
 class TestWebSocketStream:
     def test_websocket_stream_with_mock(self, app):
         """WebSocket流式测试 — mock aplan_stream。"""
 
         async def mock_stream(request):
             yield PlanEvent(type=EventType.PLAN_START, plan_id="test123")
-            yield PlanEvent(type=EventType.DECOMPOSE_DONE, plan_id="test123",
-                            data={"destination": "东京", "days": 3, "task_count": 2})
-            yield PlanEvent(type=EventType.AGENT_DONE, plan_id="test123", agent_id="food",
-                            data={"duration_ms": 1500})
-            yield PlanEvent(type=EventType.PLAN_COMPLETE, plan_id="test123",
-                            data={"plan": "完整行程", "duration_ms": 5000, "agents_used": ["food"]})
+            yield PlanEvent(
+                type=EventType.DECOMPOSE_DONE,
+                plan_id="test123",
+                data={"destination": "东京", "days": 3, "task_count": 2},
+            )
+            yield PlanEvent(
+                type=EventType.AGENT_DONE,
+                plan_id="test123",
+                agent_id="food",
+                data={"duration_ms": 1500},
+            )
+            yield PlanEvent(
+                type=EventType.PLAN_COMPLETE,
+                plan_id="test123",
+                data={"plan": "完整行程", "duration_ms": 5000, "agents_used": ["food"]},
+            )
 
         app.state.team.aplan_stream = mock_stream
 

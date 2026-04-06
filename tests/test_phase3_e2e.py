@@ -14,7 +14,7 @@ from sqlmodel import SQLModel
 
 from travelclaw.api.app import create_app
 from travelclaw.models import PlanResponse, TaskResult, TravelRequest
-from travelclaw.storage.models import AgentResultRecord, ConversationMessage, Trip, UserPreference
+from travelclaw.storage.models import AgentResultRecord
 from travelclaw.storage.repository import PreferenceRepository, TripRepository
 from travelclaw.team import TravelTeam
 
@@ -23,6 +23,7 @@ CONFIG_PATH = str(PROJECT_ROOT / "config.yaml")
 
 
 # ── Fixtures ──────────────────────────────────────────────
+
 
 @pytest.fixture
 async def db_engine():
@@ -44,11 +45,13 @@ async def db_session(db_engine):
 
 # ── 1. 数据库模型和表创建 ─────────────────────────────────
 
+
 class TestDatabaseModels:
     @pytest.mark.asyncio
     async def test_tables_created(self, db_engine):
         """验证所有表都被创建"""
         from sqlalchemy import inspect
+
         async with db_engine.connect() as conn:
             tables = await conn.run_sync(lambda c: inspect(c).get_table_names())
         assert "trips" in tables
@@ -58,6 +61,7 @@ class TestDatabaseModels:
 
 
 # ── 2. TripRepository CRUD ───────────────────────────────
+
 
 class TestTripRepository:
     @pytest.mark.asyncio
@@ -107,6 +111,7 @@ class TestTripRepository:
 
         # 验证Agent结果也被保存
         from sqlalchemy import select
+
         result = await db_session.execute(
             select(AgentResultRecord).where(AgentResultRecord.trip_id == "test123")
         )
@@ -131,6 +136,7 @@ class TestTripRepository:
 
 
 # ── 3. PreferenceRepository ──────────────────────────────
+
 
 class TestPreferenceRepository:
     @pytest.mark.asyncio
@@ -170,6 +176,7 @@ class TestPreferenceRepository:
 
 # ── 4. API端点集成持久化 ─────────────────────────────────
 
+
 class TestAPIWithPersistence:
     @pytest.fixture
     def app(self, db_engine):
@@ -184,6 +191,7 @@ class TestAPIWithPersistence:
                 yield session
 
         from travelclaw.api.routes import get_db_session
+
         app.dependency_overrides[get_db_session] = override_get_session
         return app
 

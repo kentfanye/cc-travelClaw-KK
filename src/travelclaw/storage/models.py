@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
@@ -17,6 +16,7 @@ def _uuid() -> str:
 
 class Trip(SQLModel, table=True):
     """旅行行程记录"""
+
     __tablename__ = "trips"
 
     id: str = Field(default_factory=_uuid, primary_key=True)
@@ -36,6 +36,7 @@ class Trip(SQLModel, table=True):
 
 class AgentResultRecord(SQLModel, table=True):
     """Agent执行结果记录"""
+
     __tablename__ = "agent_results"
 
     id: str = Field(default_factory=_uuid, primary_key=True)
@@ -50,6 +51,7 @@ class AgentResultRecord(SQLModel, table=True):
 
 class ConversationMessage(SQLModel, table=True):
     """Agent会话消息记录"""
+
     __tablename__ = "conversation_messages"
 
     id: str = Field(default_factory=_uuid, primary_key=True)
@@ -62,6 +64,7 @@ class ConversationMessage(SQLModel, table=True):
 
 class UserPreference(SQLModel, table=True):
     """用户偏好"""
+
     __tablename__ = "user_preferences"
 
     id: str = Field(default_factory=_uuid, primary_key=True)

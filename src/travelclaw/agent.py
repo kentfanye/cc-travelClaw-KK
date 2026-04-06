@@ -78,7 +78,14 @@ class Agent:
         except Exception as e:
             # 回滚history中的user消息
             self.history.pop()
-            if isinstance(e, (anthropic.RateLimitError, anthropic.APIConnectionError, anthropic.InternalServerError)):
+            if isinstance(
+                e,
+                (
+                    anthropic.RateLimitError,
+                    anthropic.APIConnectionError,
+                    anthropic.InternalServerError,
+                ),
+            ):
                 raise  # 让retry装饰器处理
             raise AgentError(self.agent_id, f"chat失败: {e}", cause=e) from e
 
@@ -101,7 +108,14 @@ class Agent:
             return reply
         except Exception as e:
             self.history.pop()
-            if isinstance(e, (anthropic.RateLimitError, anthropic.APIConnectionError, anthropic.InternalServerError)):
+            if isinstance(
+                e,
+                (
+                    anthropic.RateLimitError,
+                    anthropic.APIConnectionError,
+                    anthropic.InternalServerError,
+                ),
+            ):
                 raise
             raise AgentError(self.agent_id, f"achat失败: {e}", cause=e) from e
 

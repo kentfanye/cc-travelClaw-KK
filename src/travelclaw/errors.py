@@ -21,14 +21,17 @@ class AgentError(TravelClawError):
 
 class DecompositionError(TravelClawError):
     """总规划师拆解子任务失败"""
+
     pass
 
 
 class DispatchError(TravelClawError):
     """子任务分发过程中的错误"""
+
     pass
 
 
 class IntegrationError(TravelClawError):
     """结果整合失败"""
+
     pass

@@ -4,7 +4,6 @@ WebSocket 流式进度端点。
 
 from __future__ import annotations
 
-import json
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 

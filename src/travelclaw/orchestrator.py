@@ -160,10 +160,14 @@ class Orchestrator:
         for task in decomposition.tasks:
             if task.agent not in agents:
                 logger.warning("未找到Agent: %s, 跳过", task.agent)
-                results.append(TaskResult(
-                    agent_id=task.agent, domain=task.agent,
-                    content=f"[跳过] 未找到Agent: {task.agent}", success=False,
-                ))
+                results.append(
+                    TaskResult(
+                        agent_id=task.agent,
+                        domain=task.agent,
+                        content=f"[跳过] 未找到Agent: {task.agent}",
+                        success=False,
+                    )
+                )
                 continue
 
             logger.info("分发任务给 [%s]", task.agent)
@@ -190,10 +194,14 @@ class Orchestrator:
         for task in decomposition.tasks:
             if task.agent not in agents:
                 logger.warning("未找到Agent: %s, 跳过", task.agent)
-                skip_results.append(TaskResult(
-                    agent_id=task.agent, domain=task.agent,
-                    content=f"[跳过] 未找到Agent: {task.agent}", success=False,
-                ))
+                skip_results.append(
+                    TaskResult(
+                        agent_id=task.agent,
+                        domain=task.agent,
+                        content=f"[跳过] 未找到Agent: {task.agent}",
+                        success=False,
+                    )
+                )
             else:
                 tasks_to_run.append(_run(task.agent, task.instruction))
 
@@ -203,10 +211,14 @@ class Orchestrator:
         for r in parallel_results:
             if isinstance(r, Exception):
                 logger.error("并行任务异常: %s", r)
-                results.append(TaskResult(
-                    agent_id="unknown", domain="unknown",
-                    content=f"[异常] {r}", success=False,
-                ))
+                results.append(
+                    TaskResult(
+                        agent_id="unknown",
+                        domain="unknown",
+                        content=f"[异常] {r}",
+                        success=False,
+                    )
+                )
             else:
                 results.append(r)
         return results
@@ -217,8 +229,7 @@ class Orchestrator:
     def integrate_results(self, results: list[TaskResult]) -> str:
         """整合各专家结果为最终行程（同步）。"""
         expert_results = "\n\n".join(
-            f"=== {r.agent_id}（{r.domain}）===\n{r.content}"
-            for r in results if r.success
+            f"=== {r.agent_id}（{r.domain}）===\n{r.content}" for r in results if r.success
         )
         if not expert_results:
             raise IntegrationError("所有专家Agent均执行失败，无法整合")
@@ -227,7 +238,9 @@ class Orchestrator:
             model=self.model,
             max_tokens=8192,
             system=self.soul,
-            messages=[{"role": "user", "content": INTEGRATE_PROMPT.format(expert_results=expert_results)}],
+            messages=[
+                {"role": "user", "content": INTEGRATE_PROMPT.format(expert_results=expert_results)}
+            ],
         )
         return response.content[0].text
 
@@ -235,8 +248,7 @@ class Orchestrator:
     async def aintegrate_results(self, results: list[TaskResult]) -> str:
         """整合各专家结果为最终行程（异步）。"""
         expert_results = "\n\n".join(
-            f"=== {r.agent_id}（{r.domain}）===\n{r.content}"
-            for r in results if r.success
+            f"=== {r.agent_id}（{r.domain}）===\n{r.content}" for r in results if r.success
         )
         if not expert_results:
             raise IntegrationError("所有专家Agent均执行失败，无法整合")
@@ -245,7 +257,9 @@ class Orchestrator:
             model=self.model,
             max_tokens=8192,
             system=self.soul,
-            messages=[{"role": "user", "content": INTEGRATE_PROMPT.format(expert_results=expert_results)}],
+            messages=[
+                {"role": "user", "content": INTEGRATE_PROMPT.format(expert_results=expert_results)}
+            ],
         )
         return response.content[0].text
 
@@ -259,8 +273,13 @@ class Orchestrator:
 
         logger.info("[%s] [1/3] 拆解子任务...", plan_id)
         decomposition = self.decompose_tasks(user_request)
-        logger.info("[%s] 目的地=%s 天数=%d 子任务数=%d",
-                     plan_id, decomposition.destination, decomposition.days, len(decomposition.tasks))
+        logger.info(
+            "[%s] 目的地=%s 天数=%d 子任务数=%d",
+            plan_id,
+            decomposition.destination,
+            decomposition.days,
+            len(decomposition.tasks),
+        )
 
         logger.info("[%s] [2/3] 分发给专家团队...", plan_id)
         results = self.dispatch_tasks(decomposition, agents)
@@ -293,8 +312,13 @@ class Orchestrator:
 
         logger.info("[%s] [1/3] 拆解子任务...", plan_id)
         decomposition = await self.adecompose_tasks(user_request)
-        logger.info("[%s] 目的地=%s 天数=%d 子任务数=%d",
-                     plan_id, decomposition.destination, decomposition.days, len(decomposition.tasks))
+        logger.info(
+            "[%s] 目的地=%s 天数=%d 子任务数=%d",
+            plan_id,
+            decomposition.destination,
+            decomposition.days,
+            len(decomposition.tasks),
+        )
 
         logger.info("[%s] [2/3] 并行分发给专家团队...", plan_id)
         results = await self.adispatch_tasks(decomposition, agents)
@@ -339,9 +363,13 @@ class Orchestrator:
             yield PlanEvent(type=EventType.PLAN_ERROR, plan_id=plan_id, data=str(e))
             return
         yield PlanEvent(
-            type=EventType.DECOMPOSE_DONE, plan_id=plan_id,
-            data={"destination": decomposition.destination, "days": decomposition.days,
-                  "task_count": len(decomposition.tasks)},
+            type=EventType.DECOMPOSE_DONE,
+            plan_id=plan_id,
+            data={
+                "destination": decomposition.destination,
+                "days": decomposition.days,
+                "task_count": len(decomposition.tasks),
+            },
         )
 
         # 2. 并行分发（逐个Agent yield事件）
@@ -363,13 +391,24 @@ class Orchestrator:
             try:
                 result = await async_task
                 results.append(result)
-                yield PlanEvent(type=EventType.AGENT_DONE, plan_id=plan_id, agent_id=agent_id,
-                                data={"duration_ms": result.duration_ms})
+                yield PlanEvent(
+                    type=EventType.AGENT_DONE,
+                    plan_id=plan_id,
+                    agent_id=agent_id,
+                    data={"duration_ms": result.duration_ms},
+                )
             except Exception as e:
-                results.append(TaskResult(
-                    agent_id=agent_id, domain=agent_id, content=f"[错误] {e}", success=False,
-                ))
-                yield PlanEvent(type=EventType.AGENT_ERROR, plan_id=plan_id, agent_id=agent_id, data=str(e))
+                results.append(
+                    TaskResult(
+                        agent_id=agent_id,
+                        domain=agent_id,
+                        content=f"[错误] {e}",
+                        success=False,
+                    )
+                )
+                yield PlanEvent(
+                    type=EventType.AGENT_ERROR, plan_id=plan_id, agent_id=agent_id, data=str(e)
+                )
 
         # 3. 整合
         yield PlanEvent(type=EventType.INTEGRATE_START, plan_id=plan_id)
@@ -381,7 +420,11 @@ class Orchestrator:
 
         duration = int((time.monotonic() - start) * 1000)
         yield PlanEvent(
-            type=EventType.PLAN_COMPLETE, plan_id=plan_id,
-            data={"plan": final_plan, "duration_ms": duration,
-                  "agents_used": [r.agent_id for r in results if r.success]},
+            type=EventType.PLAN_COMPLETE,
+            plan_id=plan_id,
+            data={
+                "plan": final_plan,
+                "duration_ms": duration,
+                "agents_used": [r.agent_id for r in results if r.success],
+            },
         )

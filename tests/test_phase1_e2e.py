@@ -3,10 +3,9 @@ Phase 1 端到端验证 — 验证核心健壮性改造的完整性。
 不调用真实API，使用mock验证整个流程。
 """
 
-import asyncio
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -28,7 +27,6 @@ from travelclaw.agent import Agent
 from travelclaw.orchestrator import Orchestrator, _parse_decomposition_json
 from travelclaw.team import TravelTeam
 from travelclaw.logging_config import setup_logging
-from travelclaw.retry import with_retry
 
 
 # ── 配置路径 ──────────────────────────────────────────────
@@ -40,6 +38,7 @@ FOOD_WORKSPACE = PROJECT_ROOT / "agents" / "food"
 
 
 # ── 1. Pydantic模型校验 ──────────────────────────────────
+
 
 class TestModels:
     def test_travel_request_valid(self):
@@ -57,7 +56,10 @@ class TestModels:
 
     def test_task_decomposition_validation(self):
         td = TaskDecomposition(
-            destination="东京", days=5, budget="2万", travelers="2人",
+            destination="东京",
+            days=5,
+            budget="2万",
+            travelers="2人",
             tasks=[{"agent": "food", "instruction": "推荐美食"}],
         )
         assert len(td.tasks) == 1
@@ -83,6 +85,7 @@ class TestModels:
 
 # ── 2. 错误层级 ──────────────────────────────────────────
 
+
 class TestErrors:
     def test_error_hierarchy(self):
         assert issubclass(AgentError, TravelClawError)
@@ -96,6 +99,7 @@ class TestErrors:
 
 
 # ── 3. JSON解析工具 ──────────────────────────────────────
+
 
 class TestJsonParsing:
     def test_parse_code_fence_json(self):
@@ -114,6 +118,7 @@ class TestJsonParsing:
 
 
 # ── 4. Agent基本功能 ─────────────────────────────────────
+
 
 class TestAgent:
     def test_soul_loading(self):
@@ -168,6 +173,7 @@ class TestAgent:
 
 # ── 5. Orchestrator流程 ──────────────────────────────────
 
+
 class TestOrchestrator:
     def _make_orchestrator(self):
         return Orchestrator(workspace=PLANNER_WORKSPACE)
@@ -175,16 +181,22 @@ class TestOrchestrator:
     def test_decompose_with_mock(self):
         orch = self._make_orchestrator()
         mock_response = MagicMock()
-        mock_response.content = [MagicMock(text=json.dumps({
-            "destination": "东京",
-            "days": 5,
-            "budget": "2万",
-            "travelers": "2人",
-            "tasks": [
-                {"agent": "food", "instruction": "推荐东京美食"},
-                {"agent": "hotel", "instruction": "推荐酒店"},
-            ],
-        }))]
+        mock_response.content = [
+            MagicMock(
+                text=json.dumps(
+                    {
+                        "destination": "东京",
+                        "days": 5,
+                        "budget": "2万",
+                        "travelers": "2人",
+                        "tasks": [
+                            {"agent": "food", "instruction": "推荐东京美食"},
+                            {"agent": "hotel", "instruction": "推荐酒店"},
+                        ],
+                    }
+                )
+            )
+        ]
         orch._client = MagicMock()
         orch._client.messages.create.return_value = mock_response
 
@@ -195,7 +207,8 @@ class TestOrchestrator:
     def test_dispatch_with_mock_agents(self):
         orch = self._make_orchestrator()
         decomp = TaskDecomposition(
-            destination="东京", days=5,
+            destination="东京",
+            days=5,
             tasks=[
                 {"agent": "food", "instruction": "推荐美食"},
                 {"agent": "missing_agent", "instruction": "不存在的"},
@@ -241,10 +254,19 @@ class TestOrchestrator:
 
         # Mock decompose
         decompose_resp = MagicMock()
-        decompose_resp.content = [MagicMock(text=json.dumps({
-            "destination": "东京", "days": 3, "budget": "1万", "travelers": "1人",
-            "tasks": [{"agent": "food", "instruction": "推荐美食"}],
-        }))]
+        decompose_resp.content = [
+            MagicMock(
+                text=json.dumps(
+                    {
+                        "destination": "东京",
+                        "days": 3,
+                        "budget": "1万",
+                        "travelers": "1人",
+                        "tasks": [{"agent": "food", "instruction": "推荐美食"}],
+                    }
+                )
+            )
+        ]
         # Mock integrate
         integrate_resp = MagicMock()
         integrate_resp.content = [MagicMock(text="完整行程方案: Day1...")]
@@ -273,13 +295,22 @@ class TestOrchestrator:
 
         # Mock async decompose
         decompose_resp = MagicMock()
-        decompose_resp.content = [MagicMock(text=json.dumps({
-            "destination": "大阪", "days": 3, "budget": "1万", "travelers": "1人",
-            "tasks": [
-                {"agent": "food", "instruction": "推荐大阪美食"},
-                {"agent": "attraction", "instruction": "推荐景点"},
-            ],
-        }))]
+        decompose_resp.content = [
+            MagicMock(
+                text=json.dumps(
+                    {
+                        "destination": "大阪",
+                        "days": 3,
+                        "budget": "1万",
+                        "travelers": "1人",
+                        "tasks": [
+                            {"agent": "food", "instruction": "推荐大阪美食"},
+                            {"agent": "attraction", "instruction": "推荐景点"},
+                        ],
+                    }
+                )
+            )
+        ]
         # Mock async integrate
         integrate_resp = MagicMock()
         integrate_resp.content = [MagicMock(text="大阪3日行程")]
@@ -305,6 +336,7 @@ class TestOrchestrator:
 
 # ── 6. Team组装 ──────────────────────────────────────────
 
+
 class TestTeam:
     def test_team_loads_from_config(self):
         team = TravelTeam(CONFIG_PATH)
@@ -327,6 +359,7 @@ class TestTeam:
 
 # ── 7. 日志配置 ──────────────────────────────────────────
 
+
 class TestLogging:
     def test_setup_logging_no_crash(self):
         setup_logging(level="DEBUG")
@@ -338,12 +371,15 @@ class TestLogging:
 
 # ── 8. CLI入口 ───────────────────────────────────────────
 
+
 class TestCLI:
     def test_list_agents_cli(self):
         import subprocess
+
         result = subprocess.run(
             ["python", "-m", "travelclaw.main", "--config", str(CONFIG_PATH), "--list-agents"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
             cwd=str(PROJECT_ROOT),
         )
         assert result.returncode == 0

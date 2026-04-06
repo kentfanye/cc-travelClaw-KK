@@ -10,8 +10,8 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import AgentResultRecord, ConversationMessage, Trip, UserPreference
-from ..models import PlanResponse, TaskResult
+from .models import AgentResultRecord, Trip, UserPreference
+from ..models import PlanResponse
 
 
 class TripRepository:
@@ -40,7 +40,9 @@ class TripRepository:
         )
         return list(result.scalars().all())
 
-    async def save_plan_response(self, plan_response: PlanResponse, user_id: str = "anonymous") -> Trip:
+    async def save_plan_response(
+        self, plan_response: PlanResponse, user_id: str = "anonymous"
+    ) -> Trip:
         """从PlanResponse保存完整的行程记录"""
         trip = Trip(
             id=plan_response.plan_id,
@@ -98,8 +100,9 @@ class PreferenceRepository:
 
     async def set_preference(self, user_id: str, key: str, value: str):
         result = await self.session.execute(
-            select(UserPreference)
-            .where(UserPreference.user_id == user_id, UserPreference.key == key)
+            select(UserPreference).where(
+                UserPreference.user_id == user_id, UserPreference.key == key
+            )
         )
         pref = result.scalar_one_or_none()
         if pref:
@@ -112,8 +115,9 @@ class PreferenceRepository:
 
     async def delete_preference(self, user_id: str, key: str):
         result = await self.session.execute(
-            select(UserPreference)
-            .where(UserPreference.user_id == user_id, UserPreference.key == key)
+            select(UserPreference).where(
+                UserPreference.user_id == user_id, UserPreference.key == key
+            )
         )
         pref = result.scalar_one_or_none()
         if pref:
