@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - TRAVELCLAW_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - TRAVELCLAW_DATABASE_URL=sqlite+aiosqlite:///data/travelclaw.db
+      - TRAVELCLAW_LOG_LEVEL=INFO
+      - TRAVELCLAW_LOG_FORMAT=json
+      - TRAVELCLAW_MAX_CONCURRENT_AGENTS=3
+    volumes:
+      - ./agents:/app/agents:ro
+      - ./config.yaml:/app/config.yaml:ro
+      - app-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  app-data:

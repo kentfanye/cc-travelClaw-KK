@@ -8,6 +8,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..errors import TravelClawError
@@ -31,6 +32,7 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     version: str = "0.1.0"
     agents_count: int = 0
+    database: str = "unknown"
 
 
 class PreferenceBody(BaseModel):
@@ -47,13 +49,47 @@ async def get_db_session():
         yield session
 
 
-# ── Health & Agents ───────────────────────────────────────
+# ── Health & Probes ───────────────────────────────────��───
 
 
 @router.get("/health", response_model=HealthResponse)
 async def health(request: Request):
+    """综合健康检查"""
     team = request.app.state.team
-    return HealthResponse(agents_count=len(team.agents) + (1 if team.orchestrator else 0))
+    # ���查DB连通性
+    db_status = "unknown"
+    try:
+        engine = get_engine()
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception:
+        db_status = "disconnected"
+    return HealthResponse(
+        agents_count=len(team.agents) + (1 if team.orchestrator else 0),
+        database=db_status,
+    )
+
+
+@router.get("/health/live")
+async def liveness():
+    """存活探针 (Kubernetes liveness probe)"""
+    return {"status": "alive"}
+
+
+@router.get("/health/ready")
+async def readiness(request: Request):
+    """就绪探针 (Kubernetes readiness probe)"""
+    team = getattr(request.app.state, "team", None)
+    if not team or not team.orchestrator:
+        raise HTTPException(status_code=503, detail="Team not initialized")
+    try:
+        engine = get_engine()
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception:
+        raise HTTPException(status_code=503, detail="Database not ready")
+    return {"status": "ready"}
 
 
 @router.get("/agents")
