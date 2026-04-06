@@ -5,9 +5,11 @@ TravelClaw CLI入口 — 启动旅行规划AI团队。
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 from pathlib import Path
 
+from .logging_config import setup_logging
 from .team import TravelTeam
 
 
@@ -26,11 +28,24 @@ def main():
         help="列出团队所有成员",
     )
     parser.add_argument(
+        "--async", dest="use_async",
+        action="store_true",
+        help="使用异步并行模式（专家Agent并行执行）",
+    )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="日志级别 (默认: INFO)",
+    )
+    parser.add_argument(
         "request",
         nargs="*",
         help="旅行规划需求（如：'帮我规划5天东京自由行'）",
     )
     args = parser.parse_args()
+
+    setup_logging(level=args.log_level)
 
     config_path = Path(args.config)
     if not config_path.exists():
@@ -40,36 +55,44 @@ def main():
     team = TravelTeam(config_path)
 
     if args.list_agents:
-        print("\n🏢 TravelClaw 旅行规划团队\n")
+        print("\nTravelClaw 旅行规划团队\n")
         for member in team.list_agents():
-            marker = "👑" if member["type"] == "orchestrator" else "🎯"
+            marker = "[orchestrator]" if member["type"] == "orchestrator" else "[specialist] "
             domain = f" [{member.get('domain', '')}]" if member.get("domain") else ""
-            print(f"  {marker} {member['id']:15s} — {member['role']}{domain}")
+            print(f"  {marker} {member['id']:15s} -- {member['role']}{domain}")
         print()
         return
 
     if not args.request:
         # 交互模式
-        print("\n🦞 TravelClaw — AI旅行规划团队")
+        print("\nTravelClaw -- AI旅行规划团队")
         print("=" * 45)
         print("输入你的旅行需求，按Ctrl+C退出\n")
         try:
             while True:
-                request = input("🗺️  你想去哪里？> ").strip()
+                request = input("你想去哪里？> ").strip()
                 if not request:
                     continue
-                result = team.plan(request)
+                if args.use_async:
+                    response = asyncio.run(team.aplan(request))
+                else:
+                    response = team.plan(request)
                 print("\n" + "=" * 60)
-                print(result)
+                print(response.plan)
+                print(f"\n[plan_id={response.plan_id} | 耗时{response.duration_ms}ms | agents={response.agents_used}]")
                 print("=" * 60 + "\n")
         except (KeyboardInterrupt, EOFError):
-            print("\n\n再见，祝旅途愉快！👋")
+            print("\n\n再见，祝旅途愉快！")
     else:
         # 命令行模式
         request = " ".join(args.request)
-        result = team.plan(request)
+        if args.use_async:
+            response = asyncio.run(team.aplan(request))
+        else:
+            response = team.plan(request)
         print("\n" + "=" * 60)
-        print(result)
+        print(response.plan)
+        print(f"\n[plan_id={response.plan_id} | 耗时{response.duration_ms}ms | agents={response.agents_used}]")
         print("=" * 60)
 
 

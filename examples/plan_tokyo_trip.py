@@ -7,18 +7,22 @@
   python examples/plan_tokyo_trip.py
 """
 
+import asyncio
 from pathlib import Path
 
+from travelclaw.logging_config import setup_logging
 from travelclaw.team import TravelTeam
 
 
-def main():
+async def main():
+    setup_logging(level="INFO")
+
     # 从项目根目录的config.yaml加载团队
     project_root = Path(__file__).parent.parent
     team = TravelTeam(project_root / "config.yaml")
 
     # 列出团队成员
-    print("🏢 团队成员：")
+    print("团队成员：")
     for m in team.list_agents():
         print(f"  - {m['id']}: {m['role']}")
     print()
@@ -33,13 +37,16 @@ def main():
     - 不想行程太赶，每天安排2-3个主要景点就好
     """
 
-    print("🗺️  开始规划旅行...\n")
-    result = team.plan(request)
+    print("开始规划旅行（异步并行模式）...\n")
+
+    # 使用异步并行模式 — 专家Agent并行执行
+    response = await team.aplan(request)
 
     print("=" * 60)
-    print(result)
+    print(response.plan)
+    print(f"\n[plan_id={response.plan_id} | 耗时{response.duration_ms}ms | agents={response.agents_used}]")
     print("=" * 60)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

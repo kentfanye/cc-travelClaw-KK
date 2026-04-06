@@ -1,27 +1,27 @@
 """
 Team — 团队组装模块。
 从config.yaml读取配置，创建Agent实例，组装团队。
-类似OpenClaw从配置文件加载agent列表和路由规则。
 """
 
 from __future__ import annotations
 
+import logging
+from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import yaml
 
 from .agent import Agent
+from .models import PlanEvent, PlanResponse
 from .orchestrator import Orchestrator
+
+logger = logging.getLogger("travelclaw.team")
 
 
 class TravelTeam:
     """
     旅行规划AI团队 — 从配置文件自动组装。
-
-    对应OpenClaw的多Agent团队概念：
-    - 一个Orchestrator（总规划师）
-    - 多个Specialist Agent（专家顾问）
-    - config.yaml定义团队组成和路由规则
+    支持同步plan()和异步aplan()/aplan_stream()。
     """
 
     def __init__(self, config_path: str | Path = "config.yaml"):
@@ -29,10 +29,11 @@ class TravelTeam:
         self.project_root = self.config_path.parent
         self.config = self._load_config()
 
-        # 从配置创建团队
         self.orchestrator: Orchestrator | None = None
         self.agents: dict[str, Agent] = {}
         self._build_team()
+        logger.info("团队组装完成: orchestrator=%s, specialists=%s",
+                     self.orchestrator is not None, list(self.agents.keys()))
 
     def _load_config(self) -> dict:
         with open(self.config_path, encoding="utf-8") as f:
@@ -59,15 +60,23 @@ class TravelTeam:
                     model=default_model,
                 )
 
-    def plan(self, user_request: str) -> str:
-        """
-        团队协作规划旅行行程。
-        入口点 → 总规划师 → 分发给专家 → 整合结果。
-        """
+    def _ensure_orchestrator(self) -> Orchestrator:
         if not self.orchestrator:
             raise RuntimeError("团队中未找到总规划师(orchestrator)，请检查config.yaml")
+        return self.orchestrator
 
-        return self.orchestrator.plan(user_request, self.agents)
+    def plan(self, user_request: str) -> PlanResponse:
+        """团队协作规划（同步）。"""
+        return self._ensure_orchestrator().plan(user_request, self.agents)
+
+    async def aplan(self, user_request: str) -> PlanResponse:
+        """团队协作规划（异步，专家并行）。"""
+        return await self._ensure_orchestrator().aplan(user_request, self.agents)
+
+    async def aplan_stream(self, user_request: str) -> AsyncGenerator[PlanEvent, None]:
+        """团队协作规划（异步流式，yield进度事件）。"""
+        async for event in self._ensure_orchestrator().aplan_stream(user_request, self.agents):
+            yield event
 
     def list_agents(self) -> list[dict]:
         """列出团队所有成员"""
@@ -78,7 +87,7 @@ class TravelTeam:
                 "role": "总规划师",
                 "type": "orchestrator",
             })
-        for agent_id, agent in self.agents.items():
+        for agent_id in self.agents:
             members.append({
                 "id": agent_id,
                 "role": self.config["agents"][agent_id].get("description", agent_id),
