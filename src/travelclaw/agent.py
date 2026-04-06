@@ -23,6 +23,18 @@ _DEFAULT_API_BASE = "https://api.z.ai/api/coding/paas/v4"
 _DEFAULT_API_KEY = "41b233920baa4312aa379f5585e256ab.TlsvXDb2NW0DrOMW"
 
 
+def _extract_reply(message) -> str:
+    """从GLM-5.1响应中提取回复内容。
+
+    GLM-5.1是推理模型，可能把内容放在reasoning_content而非content中。
+    优先取content，若为空则取reasoning_content。
+    """
+    content = message.content or ""
+    if not content:
+        content = getattr(message, "reasoning_content", "") or ""
+    return content
+
+
 class Agent:
     """
     Agent基类 — 对应OpenClaw中一个独立的AI Agent。
@@ -88,7 +100,7 @@ class Agent:
                 max_tokens=4096,
                 messages=messages,
             )
-            reply = response.choices[0].message.content
+            reply = _extract_reply(response.choices[0].message)
             self.history.append({"role": "assistant", "content": reply})
             logger.debug("[%s] chat完成, 回复长度=%d", self.agent_id, len(reply))
             return reply
@@ -120,7 +132,7 @@ class Agent:
                 max_tokens=4096,
                 messages=messages,
             )
-            reply = response.choices[0].message.content
+            reply = _extract_reply(response.choices[0].message)
             self.history.append({"role": "assistant", "content": reply})
             logger.debug("[%s] achat完成, 回复长度=%d", self.agent_id, len(reply))
             return reply

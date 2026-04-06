@@ -17,7 +17,7 @@ from pathlib import Path
 
 import openai
 
-from .agent import Agent, _DEFAULT_API_BASE, _DEFAULT_API_KEY
+from .agent import Agent, _DEFAULT_API_BASE, _DEFAULT_API_KEY, _extract_reply
 from .errors import DecompositionError, IntegrationError
 from .models import (
     EventType,
@@ -137,7 +137,7 @@ class Orchestrator:
                 {"role": "user", "content": user_request},
             ],
         )
-        raw = response.choices[0].message.content
+        raw = _extract_reply(response.choices[0].message)
         try:
             data = _parse_decomposition_json(raw)
             return TaskDecomposition.model_validate(data)
@@ -155,7 +155,7 @@ class Orchestrator:
                 {"role": "user", "content": user_request},
             ],
         )
-        raw = response.choices[0].message.content
+        raw = _extract_reply(response.choices[0].message)
         try:
             data = _parse_decomposition_json(raw)
             return TaskDecomposition.model_validate(data)
@@ -257,7 +257,7 @@ class Orchestrator:
                 },
             ],
         )
-        return response.choices[0].message.content
+        return _extract_reply(response.choices[0].message)
 
     @with_async_retry(max_attempts=3)
     async def aintegrate_results(self, results: list[TaskResult]) -> str:
@@ -279,7 +279,7 @@ class Orchestrator:
                 },
             ],
         )
-        return response.choices[0].message.content
+        return _extract_reply(response.choices[0].message)
 
     # ── 完整规划流程 ───────────────────────────────────────
 
