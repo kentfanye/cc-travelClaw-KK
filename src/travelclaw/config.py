@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # API密钥
     api_key: str = ""
-    api_base: str = "https://open.bigmodel.cn/api/paas/v4"
+    api_base: str = "https://api.z.ai/api/coding/paas/v4"
     model_name: str = "glm-5.1"
 
     # 数据库

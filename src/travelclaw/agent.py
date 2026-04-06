@@ -19,7 +19,7 @@ from .retry import with_async_retry, with_retry
 logger = logging.getLogger("travelclaw.agent")
 
 # GLM-5.1 (智谱AI) OpenAI兼容API
-_DEFAULT_API_BASE = "https://open.bigmodel.cn/api/paas/v4"
+_DEFAULT_API_BASE = "https://api.z.ai/api/coding/paas/v4"
 _DEFAULT_API_KEY = "41b233920baa4312aa379f5585e256ab.TlsvXDb2NW0DrOMW"
 
 

@@ -11,7 +11,7 @@ model:
   provider: "zhipuai"
   default: "glm-5.1"
   orchestrator: "glm-5.1"
-  api_base: "https://open.bigmodel.cn/api/paas/v4"
+  api_base: "https://api.z.ai/api/coding/paas/v4"
 
 # Agent注册表（类似OpenClaw的agents.list）
 agents:
