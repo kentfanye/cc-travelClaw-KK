@@ -6,3 +6,5 @@ build/
 .env
 .venv/
 *.egg
+*.db
+.pytest_cache/
