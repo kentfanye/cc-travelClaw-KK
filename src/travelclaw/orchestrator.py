@@ -111,14 +111,16 @@ class Orchestrator:
     @property
     def client(self) -> openai.OpenAI:
         if self._client is None:
-            self._client = openai.OpenAI(api_key=self.api_key, base_url=self.api_base)
+            self._client = openai.OpenAI(
+                api_key=self.api_key, base_url=self.api_base, timeout=120.0
+            )
         return self._client
 
     @property
     def async_client(self) -> openai.AsyncOpenAI:
         if self._async_client is None:
             self._async_client = openai.AsyncOpenAI(
-                api_key=self.api_key, base_url=self.api_base
+                api_key=self.api_key, base_url=self.api_base, timeout=120.0
             )
         return self._async_client
 

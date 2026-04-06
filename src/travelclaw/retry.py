@@ -23,6 +23,7 @@ RETRYABLE_EXCEPTIONS = (
     openai.RateLimitError,
     openai.APIConnectionError,
     openai.InternalServerError,
+    openai.APITimeoutError,
 )
 
 
