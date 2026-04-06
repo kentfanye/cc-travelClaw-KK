@@ -182,7 +182,17 @@ class TestOrchestrator:
     def _make_orchestrator(self):
         return Orchestrator(workspace=PLANNER_WORKSPACE)
 
+    def _make_mock_agents(self, *agent_ids):
+        """创建mock agents，不需要真的调用API"""
+        agents = {}
+        for aid in agent_ids:
+            agents[aid] = Agent(
+                agent_id=aid, workspace=PROJECT_ROOT / "agents" / aid
+            )
+        return agents
+
     def test_decompose_with_mock(self):
+        """向后兼容：decompose_tasks仍可用"""
         orch = self._make_orchestrator()
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = _mock_openai_response(
@@ -206,6 +216,7 @@ class TestOrchestrator:
         assert len(decomp.tasks) == 2
 
     def test_dispatch_with_mock_agents(self):
+        """向后兼容：dispatch_tasks仍可用"""
         orch = self._make_orchestrator()
         decomp = TaskDecomposition(
             destination="东京",
@@ -215,7 +226,6 @@ class TestOrchestrator:
                 {"agent": "missing_agent", "instruction": "不存在的"},
             ],
         )
-        # 创建mock agent
         food_agent = Agent(agent_id="food", workspace=FOOD_WORKSPACE)
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = _mock_openai_response("寿司推荐")
@@ -227,6 +237,7 @@ class TestOrchestrator:
         assert results[1].success is False  # missing_agent
 
     def test_integrate_with_mock(self):
+        """向后兼容：integrate_results仍可用"""
         orch = self._make_orchestrator()
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = _mock_openai_response(
@@ -249,80 +260,44 @@ class TestOrchestrator:
         with pytest.raises(IntegrationError):
             orch.integrate_results(results)
 
-    def test_full_plan_sync(self):
-        """完整同步规划流程mock测试"""
+    def test_unified_plan_sync(self):
+        """核心测试：单次调用模式的完整规划"""
         orch = self._make_orchestrator()
-
-        decompose_resp = _mock_openai_response(
-            json.dumps(
-                {
-                    "destination": "东京",
-                    "days": 3,
-                    "budget": "1万",
-                    "travelers": "1人",
-                    "tasks": [{"agent": "food", "instruction": "推荐美食"}],
-                }
-            )
-        )
-        integrate_resp = _mock_openai_response("完整行程方案: Day1...")
-
         mock_client = MagicMock()
-        mock_client.chat.completions.create.side_effect = [decompose_resp, integrate_resp]
+        mock_client.chat.completions.create.return_value = _mock_openai_response(
+            "完整行程方案: Day1 浅草寺 → 寿司大 → 新宿酒店..."
+        )
         orch._client = mock_client
 
-        # Mock agent
-        food_agent = Agent(agent_id="food", workspace=FOOD_WORKSPACE)
-        food_mock_client = MagicMock()
-        food_mock_client.chat.completions.create.return_value = _mock_openai_response("拉面推荐")
-        food_agent._client = food_mock_client
+        agents = self._make_mock_agents("food", "hotel")
+        response = orch.plan("3天东京游", agents)
 
-        response = orch.plan("3天东京游", {"food": food_agent})
         assert isinstance(response, PlanResponse)
         assert response.plan_id
         assert "完整行程方案" in response.plan
-        assert len(response.agents_used) == 1
+        assert set(response.agents_used) == {"food", "hotel"}
         assert response.duration_ms >= 0
+        # 单次调用：LLM只被调了1次
+        assert mock_client.chat.completions.create.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_full_plan_async(self):
-        """完整异步规划流程mock测试"""
+    async def test_unified_plan_async(self):
+        """核心测试：异步单次调用"""
         orch = self._make_orchestrator()
-
-        decompose_resp = _mock_openai_response(
-            json.dumps(
-                {
-                    "destination": "大阪",
-                    "days": 3,
-                    "budget": "1万",
-                    "travelers": "1人",
-                    "tasks": [
-                        {"agent": "food", "instruction": "推荐大阪美食"},
-                        {"agent": "attraction", "instruction": "推荐景点"},
-                    ],
-                }
-            )
-        )
-        integrate_resp = _mock_openai_response("大阪3日行程")
-
         mock_client = AsyncMock()
-        mock_client.chat.completions.create.side_effect = [decompose_resp, integrate_resp]
+        mock_client.chat.completions.create.return_value = _mock_openai_response(
+            "大阪3日行程: Day1 道顿堀..."
+        )
         orch._async_client = mock_client
 
-        # Mock agents
-        agents = {}
-        for aid in ["food", "attraction"]:
-            a = Agent(agent_id=aid, workspace=PROJECT_ROOT / "agents" / aid)
-            agent_mock = AsyncMock()
-            agent_mock.chat.completions.create.return_value = _mock_openai_response(
-                f"{aid}的建议"
-            )
-            a._async_client = agent_mock
-            agents[aid] = a
-
+        agents = self._make_mock_agents("food", "attraction")
         response = await orch.aplan("3天大阪游", agents)
+
         assert isinstance(response, PlanResponse)
-        assert response.plan == "大阪3日行程"
-        assert len(response.agents_used) == 2
+        assert "大阪3日行程" in response.plan
+        assert set(response.agents_used) == {"food", "attraction"}
+        # 单次调用
+        assert mock_client.chat.completions.create.call_count == 1
 
 
 # ── 6. Team组装 ──────────────────────────────────────────
