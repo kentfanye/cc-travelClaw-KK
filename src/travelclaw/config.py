@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     """TravelClaw全局配置"""
 
     # API密钥
-    anthropic_api_key: str = ""
+    api_key: str = ""
+    api_base: str = "https://open.bigmodel.cn/api/paas/v4"
+    model_name: str = "glm-5.1"
 
     # 数据库
     database_url: str = "sqlite+aiosqlite:///travelclaw.db"

@@ -45,7 +45,7 @@ class TravelTeam:
     def _build_team(self):
         """根据config.yaml构建团队"""
         model_config = self.config.get("model", {})
-        default_model = model_config.get("default", "claude-sonnet-4-6")
+        default_model = model_config.get("default", "glm-5.1")
         orchestrator_model = model_config.get("orchestrator", default_model)
 
         for agent_id, agent_conf in self.config.get("agents", {}).items():

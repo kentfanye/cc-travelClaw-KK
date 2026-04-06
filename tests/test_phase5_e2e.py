@@ -139,7 +139,7 @@ class TestDockerFiles:
 
     def test_docker_compose_has_env(self):
         content = (PROJECT_ROOT / "docker-compose.yml").read_text()
-        assert "TRAVELCLAW_ANTHROPIC_API_KEY" in content
+        assert "TRAVELCLAW_API_KEY" in content
         assert "TRAVELCLAW_DATABASE_URL" in content
 
     def test_ci_workflow_exists(self):

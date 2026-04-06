@@ -15,9 +15,9 @@ import uuid
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
-import anthropic
+import openai
 
-from .agent import Agent
+from .agent import Agent, _DEFAULT_API_BASE, _DEFAULT_API_KEY
 from .errors import DecompositionError, IntegrationError
 from .models import (
     EventType,
@@ -92,28 +92,34 @@ class Orchestrator:
     def __init__(
         self,
         workspace: Path,
-        model: str = "claude-sonnet-4-6",
+        model: str = "glm-5.1",
         max_concurrent: int = 3,
+        api_key: str | None = None,
+        api_base: str | None = None,
     ):
         self.workspace = workspace
         self.model = model
         self.max_concurrent = max_concurrent
-        self._client: anthropic.Anthropic | None = None
-        self._async_client: anthropic.AsyncAnthropic | None = None
+        self.api_key = api_key or _DEFAULT_API_KEY
+        self.api_base = api_base or _DEFAULT_API_BASE
+        self._client: openai.OpenAI | None = None
+        self._async_client: openai.AsyncOpenAI | None = None
         # 从SOUL.md加载总规划师的身份
         soul_path = workspace / "SOUL.md"
         self.soul = soul_path.read_text(encoding="utf-8") if soul_path.exists() else ""
 
     @property
-    def client(self) -> anthropic.Anthropic:
+    def client(self) -> openai.OpenAI:
         if self._client is None:
-            self._client = anthropic.Anthropic()
+            self._client = openai.OpenAI(api_key=self.api_key, base_url=self.api_base)
         return self._client
 
     @property
-    def async_client(self) -> anthropic.AsyncAnthropic:
+    def async_client(self) -> openai.AsyncOpenAI:
         if self._async_client is None:
-            self._async_client = anthropic.AsyncAnthropic()
+            self._async_client = openai.AsyncOpenAI(
+                api_key=self.api_key, base_url=self.api_base
+            )
         return self._async_client
 
     # ── 第一步：子任务拆解 ─────────────────────────────────
@@ -121,13 +127,15 @@ class Orchestrator:
     @with_retry(max_attempts=3)
     def decompose_tasks(self, user_request: str) -> TaskDecomposition:
         """将用户需求拆解为子任务（同步）。"""
-        response = self.client.messages.create(
+        response = self.client.chat.completions.create(
             model=self.model,
             max_tokens=2048,
-            system=self.soul + "\n\n" + TASK_DECOMPOSE_PROMPT,
-            messages=[{"role": "user", "content": user_request}],
+            messages=[
+                {"role": "system", "content": self.soul + "\n\n" + TASK_DECOMPOSE_PROMPT},
+                {"role": "user", "content": user_request},
+            ],
         )
-        raw = response.content[0].text
+        raw = response.choices[0].message.content
         try:
             data = _parse_decomposition_json(raw)
             return TaskDecomposition.model_validate(data)
@@ -137,13 +145,15 @@ class Orchestrator:
     @with_async_retry(max_attempts=3)
     async def adecompose_tasks(self, user_request: str) -> TaskDecomposition:
         """将用户需求拆解为子任务（异步）。"""
-        response = await self.async_client.messages.create(
+        response = await self.async_client.chat.completions.create(
             model=self.model,
             max_tokens=2048,
-            system=self.soul + "\n\n" + TASK_DECOMPOSE_PROMPT,
-            messages=[{"role": "user", "content": user_request}],
+            messages=[
+                {"role": "system", "content": self.soul + "\n\n" + TASK_DECOMPOSE_PROMPT},
+                {"role": "user", "content": user_request},
+            ],
         )
-        raw = response.content[0].text
+        raw = response.choices[0].message.content
         try:
             data = _parse_decomposition_json(raw)
             return TaskDecomposition.model_validate(data)
@@ -234,15 +244,18 @@ class Orchestrator:
         if not expert_results:
             raise IntegrationError("所有专家Agent均执行失败，无法整合")
 
-        response = self.client.messages.create(
+        response = self.client.chat.completions.create(
             model=self.model,
             max_tokens=8192,
-            system=self.soul,
             messages=[
-                {"role": "user", "content": INTEGRATE_PROMPT.format(expert_results=expert_results)}
+                {"role": "system", "content": self.soul},
+                {
+                    "role": "user",
+                    "content": INTEGRATE_PROMPT.format(expert_results=expert_results),
+                },
             ],
         )
-        return response.content[0].text
+        return response.choices[0].message.content
 
     @with_async_retry(max_attempts=3)
     async def aintegrate_results(self, results: list[TaskResult]) -> str:
@@ -253,15 +266,18 @@ class Orchestrator:
         if not expert_results:
             raise IntegrationError("所有专家Agent均执行失败，无法整合")
 
-        response = await self.async_client.messages.create(
+        response = await self.async_client.chat.completions.create(
             model=self.model,
             max_tokens=8192,
-            system=self.soul,
             messages=[
-                {"role": "user", "content": INTEGRATE_PROMPT.format(expert_results=expert_results)}
+                {"role": "system", "content": self.soul},
+                {
+                    "role": "user",
+                    "content": INTEGRATE_PROMPT.format(expert_results=expert_results),
+                },
             ],
         )
-        return response.content[0].text
+        return response.choices[0].message.content
 
     # ── 完整规划流程 ───────────────────────────────────────
 

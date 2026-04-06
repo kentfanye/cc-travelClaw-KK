@@ -8,9 +8,10 @@ team:
 
 # 模型配置
 model:
-  provider: "anthropic"
-  default: "claude-sonnet-4-6"
-  orchestrator: "claude-sonnet-4-6"
+  provider: "zhipuai"
+  default: "glm-5.1"
+  orchestrator: "glm-5.1"
+  api_base: "https://open.bigmodel.cn/api/paas/v4"
 
 # Agent注册表（类似OpenClaw的agents.list）
 agents:

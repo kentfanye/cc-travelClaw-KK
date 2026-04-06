@@ -1,5 +1,5 @@
 """
-重试装饰器 — 对Anthropic API调用做指数退避重试。
+重试装饰器 — 对LLM API调用做指数退避重试。
 """
 
 from __future__ import annotations
@@ -14,15 +14,15 @@ from tenacity import (
     before_sleep_log,
 )
 
-import anthropic
+import openai
 
 logger = logging.getLogger("travelclaw.retry")
 
-# 需要重试的Anthropic异常
+# 需要重试的OpenAI兼容异常
 RETRYABLE_EXCEPTIONS = (
-    anthropic.RateLimitError,
-    anthropic.APIConnectionError,
-    anthropic.InternalServerError,
+    openai.RateLimitError,
+    openai.APIConnectionError,
+    openai.InternalServerError,
 )
 
 

@@ -37,6 +37,13 @@ PLANNER_WORKSPACE = PROJECT_ROOT / "agents" / "planner"
 FOOD_WORKSPACE = PROJECT_ROOT / "agents" / "food"
 
 
+def _mock_openai_response(text: str) -> MagicMock:
+    """创建OpenAI兼容的mock响应"""
+    resp = MagicMock()
+    resp.choices = [MagicMock(message=MagicMock(content=text))]
+    return resp
+
+
 # ── 1. Pydantic模型校验 ──────────────────────────────────
 
 
@@ -137,10 +144,9 @@ class TestAgent:
 
     def test_chat_with_mock(self):
         agent = Agent(agent_id="food", workspace=FOOD_WORKSPACE)
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="推荐寿司")]
-        agent._client = MagicMock()
-        agent._client.messages.create.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = _mock_openai_response("推荐寿司")
+        agent._client = mock_client
 
         reply = agent.chat("推荐东京美食")
         assert reply == "推荐寿司"
@@ -148,10 +154,9 @@ class TestAgent:
 
     def test_execute_task_with_mock(self):
         agent = Agent(agent_id="food", workspace=FOOD_WORKSPACE)
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="拉面推荐")]
-        agent._client = MagicMock()
-        agent._client.messages.create.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = _mock_openai_response("拉面推荐")
+        agent._client = mock_client
 
         result = agent.execute_task("推荐拉面")
         assert result.success is True
@@ -161,10 +166,9 @@ class TestAgent:
     @pytest.mark.asyncio
     async def test_async_execute_task_with_mock(self):
         agent = Agent(agent_id="hotel", workspace=PROJECT_ROOT / "agents" / "hotel")
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="推荐新宿酒店")]
-        agent._async_client = AsyncMock()
-        agent._async_client.messages.create.return_value = mock_response
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create.return_value = _mock_openai_response("推荐新宿酒店")
+        agent._async_client = mock_client
 
         result = await agent.aexecute_task("推荐酒店")
         assert result.success is True
@@ -180,25 +184,22 @@ class TestOrchestrator:
 
     def test_decompose_with_mock(self):
         orch = self._make_orchestrator()
-        mock_response = MagicMock()
-        mock_response.content = [
-            MagicMock(
-                text=json.dumps(
-                    {
-                        "destination": "东京",
-                        "days": 5,
-                        "budget": "2万",
-                        "travelers": "2人",
-                        "tasks": [
-                            {"agent": "food", "instruction": "推荐东京美食"},
-                            {"agent": "hotel", "instruction": "推荐酒店"},
-                        ],
-                    }
-                )
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = _mock_openai_response(
+            json.dumps(
+                {
+                    "destination": "东京",
+                    "days": 5,
+                    "budget": "2万",
+                    "travelers": "2人",
+                    "tasks": [
+                        {"agent": "food", "instruction": "推荐东京美食"},
+                        {"agent": "hotel", "instruction": "推荐酒店"},
+                    ],
+                }
             )
-        ]
-        orch._client = MagicMock()
-        orch._client.messages.create.return_value = mock_response
+        )
+        orch._client = mock_client
 
         decomp = orch.decompose_tasks("5天东京游")
         assert decomp.destination == "东京"
@@ -216,10 +217,9 @@ class TestOrchestrator:
         )
         # 创建mock agent
         food_agent = Agent(agent_id="food", workspace=FOOD_WORKSPACE)
-        mock_resp = MagicMock()
-        mock_resp.content = [MagicMock(text="寿司推荐")]
-        food_agent._client = MagicMock()
-        food_agent._client.messages.create.return_value = mock_resp
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = _mock_openai_response("寿司推荐")
+        food_agent._client = mock_client
 
         results = orch.dispatch_tasks(decomp, {"food": food_agent})
         assert len(results) == 2
@@ -228,10 +228,11 @@ class TestOrchestrator:
 
     def test_integrate_with_mock(self):
         orch = self._make_orchestrator()
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="Day 1: 浅草寺...")]
-        orch._client = MagicMock()
-        orch._client.messages.create.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = _mock_openai_response(
+            "Day 1: 浅草寺..."
+        )
+        orch._client = mock_client
 
         results = [
             TaskResult(agent_id="food", domain="food", content="寿司推荐"),
@@ -252,34 +253,28 @@ class TestOrchestrator:
         """完整同步规划流程mock测试"""
         orch = self._make_orchestrator()
 
-        # Mock decompose
-        decompose_resp = MagicMock()
-        decompose_resp.content = [
-            MagicMock(
-                text=json.dumps(
-                    {
-                        "destination": "东京",
-                        "days": 3,
-                        "budget": "1万",
-                        "travelers": "1人",
-                        "tasks": [{"agent": "food", "instruction": "推荐美食"}],
-                    }
-                )
+        decompose_resp = _mock_openai_response(
+            json.dumps(
+                {
+                    "destination": "东京",
+                    "days": 3,
+                    "budget": "1万",
+                    "travelers": "1人",
+                    "tasks": [{"agent": "food", "instruction": "推荐美食"}],
+                }
             )
-        ]
-        # Mock integrate
-        integrate_resp = MagicMock()
-        integrate_resp.content = [MagicMock(text="完整行程方案: Day1...")]
+        )
+        integrate_resp = _mock_openai_response("完整行程方案: Day1...")
 
-        orch._client = MagicMock()
-        orch._client.messages.create.side_effect = [decompose_resp, integrate_resp]
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [decompose_resp, integrate_resp]
+        orch._client = mock_client
 
         # Mock agent
         food_agent = Agent(agent_id="food", workspace=FOOD_WORKSPACE)
-        food_resp = MagicMock()
-        food_resp.content = [MagicMock(text="拉面推荐")]
-        food_agent._client = MagicMock()
-        food_agent._client.messages.create.return_value = food_resp
+        food_mock_client = MagicMock()
+        food_mock_client.chat.completions.create.return_value = _mock_openai_response("拉面推荐")
+        food_agent._client = food_mock_client
 
         response = orch.plan("3天东京游", {"food": food_agent})
         assert isinstance(response, PlanResponse)
@@ -293,39 +288,35 @@ class TestOrchestrator:
         """完整异步规划流程mock测试"""
         orch = self._make_orchestrator()
 
-        # Mock async decompose
-        decompose_resp = MagicMock()
-        decompose_resp.content = [
-            MagicMock(
-                text=json.dumps(
-                    {
-                        "destination": "大阪",
-                        "days": 3,
-                        "budget": "1万",
-                        "travelers": "1人",
-                        "tasks": [
-                            {"agent": "food", "instruction": "推荐大阪美食"},
-                            {"agent": "attraction", "instruction": "推荐景点"},
-                        ],
-                    }
-                )
+        decompose_resp = _mock_openai_response(
+            json.dumps(
+                {
+                    "destination": "大阪",
+                    "days": 3,
+                    "budget": "1万",
+                    "travelers": "1人",
+                    "tasks": [
+                        {"agent": "food", "instruction": "推荐大阪美食"},
+                        {"agent": "attraction", "instruction": "推荐景点"},
+                    ],
+                }
             )
-        ]
-        # Mock async integrate
-        integrate_resp = MagicMock()
-        integrate_resp.content = [MagicMock(text="大阪3日行程")]
+        )
+        integrate_resp = _mock_openai_response("大阪3日行程")
 
-        orch._async_client = AsyncMock()
-        orch._async_client.messages.create.side_effect = [decompose_resp, integrate_resp]
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create.side_effect = [decompose_resp, integrate_resp]
+        orch._async_client = mock_client
 
         # Mock agents
         agents = {}
         for aid in ["food", "attraction"]:
             a = Agent(agent_id=aid, workspace=PROJECT_ROOT / "agents" / aid)
-            resp = MagicMock()
-            resp.content = [MagicMock(text=f"{aid}的建议")]
-            a._async_client = AsyncMock()
-            a._async_client.messages.create.return_value = resp
+            agent_mock = AsyncMock()
+            agent_mock.chat.completions.create.return_value = _mock_openai_response(
+                f"{aid}的建议"
+            )
+            a._async_client = agent_mock
             agents[aid] = a
 
         response = await orch.aplan("3天大阪游", agents)

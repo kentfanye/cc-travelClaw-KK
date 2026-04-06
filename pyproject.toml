@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "AI旅行规划团队 - 模仿OpenClaw多Agent架构的最小化实现"
 requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.42.0",
+    "openai>=1.0",
     "pyyaml>=6.0",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",

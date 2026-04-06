@@ -4,7 +4,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - TRAVELCLAW_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - TRAVELCLAW_API_KEY=${TRAVELCLAW_API_KEY}
       - TRAVELCLAW_DATABASE_URL=sqlite+aiosqlite:///data/travelclaw.db
       - TRAVELCLAW_LOG_LEVEL=INFO
       - TRAVELCLAW_LOG_FORMAT=json

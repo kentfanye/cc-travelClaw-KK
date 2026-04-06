@@ -10,13 +10,17 @@ import logging
 import time
 from pathlib import Path
 
-import anthropic
+import openai
 
 from .errors import AgentError
 from .models import TaskResult
-from .retry import with_retry, with_async_retry
+from .retry import with_async_retry, with_retry
 
 logger = logging.getLogger("travelclaw.agent")
+
+# GLM-5.1 (智谱AI) OpenAI兼容API
+_DEFAULT_API_BASE = "https://open.bigmodel.cn/api/paas/v4"
+_DEFAULT_API_KEY = "41b233920baa4312aa379f5585e256ab.TlsvXDb2NW0DrOMW"
 
 
 class Agent:
@@ -25,14 +29,23 @@ class Agent:
     每个Agent有自己的SOUL.md(身份)、工作空间、会话历史。
     """
 
-    def __init__(self, agent_id: str, workspace: Path, model: str = "claude-sonnet-4-6"):
+    def __init__(
+        self,
+        agent_id: str,
+        workspace: Path,
+        model: str = "glm-5.1",
+        api_key: str | None = None,
+        api_base: str | None = None,
+    ):
         self.agent_id = agent_id
         self.workspace = workspace
         self.model = model
+        self.api_key = api_key or _DEFAULT_API_KEY
+        self.api_base = api_base or _DEFAULT_API_BASE
         self.history: list[dict] = []
         self._soul: str = ""
-        self._client: anthropic.Anthropic | None = None
-        self._async_client: anthropic.AsyncAnthropic | None = None
+        self._client: openai.OpenAI | None = None
+        self._async_client: openai.AsyncOpenAI | None = None
 
     @property
     def soul(self) -> str:
@@ -46,15 +59,17 @@ class Agent:
         return self._soul
 
     @property
-    def client(self) -> anthropic.Anthropic:
+    def client(self) -> openai.OpenAI:
         if self._client is None:
-            self._client = anthropic.Anthropic()
+            self._client = openai.OpenAI(api_key=self.api_key, base_url=self.api_base)
         return self._client
 
     @property
-    def async_client(self) -> anthropic.AsyncAnthropic:
+    def async_client(self) -> openai.AsyncOpenAI:
         if self._async_client is None:
-            self._async_client = anthropic.AsyncAnthropic()
+            self._async_client = openai.AsyncOpenAI(
+                api_key=self.api_key, base_url=self.api_base
+            )
         return self._async_client
 
     @with_retry(max_attempts=3)
@@ -65,13 +80,13 @@ class Agent:
         """
         self.history.append({"role": "user", "content": user_message})
         try:
-            response = self.client.messages.create(
+            messages = [{"role": "system", "content": self.soul}] + self.history
+            response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=4096,
-                system=self.soul,
-                messages=self.history,
+                messages=messages,
             )
-            reply = response.content[0].text
+            reply = response.choices[0].message.content
             self.history.append({"role": "assistant", "content": reply})
             logger.debug("[%s] chat完成, 回复长度=%d", self.agent_id, len(reply))
             return reply
@@ -81,9 +96,9 @@ class Agent:
             if isinstance(
                 e,
                 (
-                    anthropic.RateLimitError,
-                    anthropic.APIConnectionError,
-                    anthropic.InternalServerError,
+                    openai.RateLimitError,
+                    openai.APIConnectionError,
+                    openai.InternalServerError,
                 ),
             ):
                 raise  # 让retry装饰器处理
@@ -96,13 +111,13 @@ class Agent:
         """
         self.history.append({"role": "user", "content": user_message})
         try:
-            response = await self.async_client.messages.create(
+            messages = [{"role": "system", "content": self.soul}] + self.history
+            response = await self.async_client.chat.completions.create(
                 model=self.model,
                 max_tokens=4096,
-                system=self.soul,
-                messages=self.history,
+                messages=messages,
             )
-            reply = response.content[0].text
+            reply = response.choices[0].message.content
             self.history.append({"role": "assistant", "content": reply})
             logger.debug("[%s] achat完成, 回复长度=%d", self.agent_id, len(reply))
             return reply
@@ -111,9 +126,9 @@ class Agent:
             if isinstance(
                 e,
                 (
-                    anthropic.RateLimitError,
-                    anthropic.APIConnectionError,
-                    anthropic.InternalServerError,
+                    openai.RateLimitError,
+                    openai.APIConnectionError,
+                    openai.InternalServerError,
                 ),
             ):
                 raise
