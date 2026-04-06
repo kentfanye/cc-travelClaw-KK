@@ -30,7 +30,7 @@ class TestSettings:
         s = Settings()
         assert s.database_url == "sqlite+aiosqlite:///travelclaw.db"
         assert s.log_level == "INFO"
-        assert s.max_concurrent_agents == 3
+        assert s.max_concurrent_agents == 1
         assert s.port == 8000
 
     def test_env_override(self, monkeypatch):

@@ -24,9 +24,9 @@ class Settings(BaseSettings):
     log_format: str = "text"  # text / json
 
     # 调度
-    max_concurrent_agents: int = 3
-    retry_max_attempts: int = 3
-    retry_base_delay: float = 1.0
+    max_concurrent_agents: int = 1  # GLM-5.1免费API限流严格，默认串行
+    retry_max_attempts: int = 5
+    retry_base_delay: float = 2.0
 
     # API服务
     host: str = "0.0.0.0"

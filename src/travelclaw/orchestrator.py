@@ -93,7 +93,7 @@ class Orchestrator:
         self,
         workspace: Path,
         model: str = "glm-5.1",
-        max_concurrent: int = 3,
+        max_concurrent: int = 1,
         api_key: str | None = None,
         api_base: str | None = None,
     ):

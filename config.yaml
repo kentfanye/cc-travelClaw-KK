@@ -61,3 +61,5 @@ routing:
   strategy: "orchestrator-dispatch"
   # 所有用户请求先进入总规划师，由其拆解后分发
   entry_point: "planner"
+  # GLM-5.1免费API限流严格，串行执行避免429
+  max_concurrent: 1

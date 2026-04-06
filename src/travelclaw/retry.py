@@ -27,28 +27,28 @@ RETRYABLE_EXCEPTIONS = (
 )
 
 
-def with_retry(max_attempts: int = 3, base_delay: float = 1.0):
+def with_retry(max_attempts: int = 5, base_delay: float = 2.0):
     """
     为同步函数添加重试装饰器。
-    对 RateLimitError / APIConnectionError / InternalServerError 做指数退避。
+    对 RateLimitError / APIConnectionError / InternalServerError / APITimeoutError 做指数退避。
     """
     return retry(
         retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
         stop=stop_after_attempt(max_attempts),
-        wait=wait_exponential(multiplier=base_delay, min=base_delay, max=30),
+        wait=wait_exponential(multiplier=base_delay, min=base_delay, max=60),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
 
 
-def with_async_retry(max_attempts: int = 3, base_delay: float = 1.0):
+def with_async_retry(max_attempts: int = 5, base_delay: float = 2.0):
     """
     为异步函数添加重试装饰器。
     """
     return retry(
         retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
         stop=stop_after_attempt(max_attempts),
-        wait=wait_exponential(multiplier=base_delay, min=base_delay, max=30),
+        wait=wait_exponential(multiplier=base_delay, min=base_delay, max=60),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )

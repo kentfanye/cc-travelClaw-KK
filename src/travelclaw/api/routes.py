@@ -115,7 +115,11 @@ async def create_plan(
         logger.info("行程已保存: plan_id=%s", response.plan_id)
         return response
     except TravelClawError as e:
+        logger.error("规划失败: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error("规划异常: %s", e)
+        raise HTTPException(status_code=502, detail=f"LLM服务调用失败: {e}")
 
 
 @router.get("/plans")
