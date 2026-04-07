@@ -110,6 +110,8 @@ class Orchestrator:
         # 从SOUL.md加载总规划师的身份
         soul_path = workspace / "SOUL.md"
         self.soul = soul_path.read_text(encoding="utf-8") if soul_path.exists() else ""
+        # 咨询对话历史（每个会话独立）
+        self._chat_sessions: dict[str, list[dict]] = {}
 
     @property
     def client(self) -> openai.OpenAI:
@@ -126,6 +128,55 @@ class Orchestrator:
                 api_key=self.api_key, base_url=self.api_base, timeout=180.0
             )
         return self._async_client
+
+    # ── 第一阶段：需求咨询对话 ───────────────────────────────
+
+    def get_or_create_session(self, session_id: str) -> list[dict]:
+        """获取或创建咨询会话"""
+        if session_id not in self._chat_sessions:
+            self._chat_sessions[session_id] = []
+        return self._chat_sessions[session_id]
+
+    def clear_session(self, session_id: str):
+        """清除咨询会话"""
+        self._chat_sessions.pop(session_id, None)
+
+    @with_async_retry(max_attempts=3)
+    async def aconsult(self, session_id: str, user_message: str) -> str:
+        """
+        咨询对话（异步流式）。
+        总规划师与用户多轮对话收集需求。
+        """
+        history = self.get_or_create_session(session_id)
+        history.append({"role": "user", "content": user_message})
+
+        messages = [{"role": "system", "content": self.soul}] + history
+
+        stream = await self.async_client.chat.completions.create(
+            model=self.model,
+            max_tokens=2048,
+            stream=True,
+            messages=messages,
+        )
+
+        content_parts = []
+        reasoning_parts = []
+        async for chunk in stream:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta:
+                if delta.content:
+                    content_parts.append(delta.content)
+                rc = getattr(delta, "reasoning_content", None)
+                if rc:
+                    reasoning_parts.append(rc)
+
+        reply = "".join(content_parts)
+        if not reply and reasoning_parts:
+            reply = "".join(reasoning_parts)
+
+        history.append({"role": "assistant", "content": reply})
+        logger.info("[consult:%s] 对话轮次=%d", session_id, len(history) // 2)
+        return reply
 
     # ── 核心：流式调用规划（保持连接活跃） ────────────────
 

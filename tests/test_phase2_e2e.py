@@ -119,7 +119,7 @@ class TestPlanEndpoint:
 
 class TestWebSocketStream:
     def test_websocket_stream_with_mock(self, app):
-        """WebSocket流式测试 — mock aplan_stream。"""
+        """WebSocket流式测试 — 使用type:plan直接规划模式。"""
 
         async def mock_stream(request):
             yield PlanEvent(type=EventType.PLAN_START, plan_id="test123")
@@ -144,7 +144,7 @@ class TestWebSocketStream:
 
         test_client = TestClient(app)
         with test_client.websocket_connect("/api/v1/plan/stream") as ws:
-            ws.send_json({"request": "3天东京游"})
+            ws.send_json({"type": "plan", "request": "3天东京游"})
 
             events = []
             while True:

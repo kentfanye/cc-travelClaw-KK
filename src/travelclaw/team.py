@@ -68,6 +68,14 @@ class TravelTeam:
             raise RuntimeError("团队中未找到总规划师(orchestrator)，请检查config.yaml")
         return self.orchestrator
 
+    async def aconsult(self, session_id: str, user_message: str) -> str:
+        """总规划师咨询对话（多轮收集需求）。"""
+        return await self._ensure_orchestrator().aconsult(session_id, user_message)
+
+    def clear_session(self, session_id: str):
+        """清除咨询会话。"""
+        self._ensure_orchestrator().clear_session(session_id)
+
     def plan(self, user_request: str) -> PlanResponse:
         """团队协作规划（同步）。"""
         return self._ensure_orchestrator().plan(user_request, self.agents)

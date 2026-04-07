@@ -12,485 +12,329 @@
   --bg:#f7fafc;--card:#fff;--text:#2d3748;--text-light:#718096;
   --radius:12px;--shadow:0 4px 14px rgba(0,0,0,.08);
 }
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
-a{color:var(--blue);text-decoration:none}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-/* Header */
-.header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-light) 100%);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.15)}
-.header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
-.header h1 span{font-size:24px}
+.header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-light) 100%);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.header h1{font-size:18px;font-weight:600;display:flex;align-items:center;gap:6px}
 .nav{display:flex;gap:4px}
-.nav button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s}
+.nav button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s}
 .nav button:hover,.nav button.active{background:rgba(255,255,255,.3)}
 
-/* Container */
-.container{max-width:800px;width:100%;margin:0 auto;padding:20px;flex:1}
-
-/* Views */
-.view{display:none}.view.active{display:block}
-
-/* Input Section */
-.input-section{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
-.input-section label{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;display:block}
-.input-section textarea{width:100%;border:2px solid var(--gray);border-radius:8px;padding:14px;font-size:15px;line-height:1.6;resize:vertical;min-height:100px;font-family:inherit;transition:border-color .2s;outline:none}
-.input-section textarea:focus{border-color:var(--gold)}
-.input-section textarea::placeholder{color:var(--gray-dark)}
-.input-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-.hint{font-size:13px;color:var(--text-light)}
-.btn-plan{background:linear-gradient(135deg,var(--gold) 0%,#ed8936 100%);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
-.btn-plan:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(246,173,85,.4)}
-.btn-plan:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-
-/* Agent Cards */
-.agents-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.agent-card{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow);border:2px solid transparent;transition:all .3s;position:relative;overflow:hidden}
-.agent-card .emoji{font-size:32px;margin-bottom:6px}
-.agent-card .domain{font-size:13px;color:var(--gold);font-weight:600;letter-spacing:2px}
-.agent-card .label{font-size:14px;color:var(--text-light);margin-top:2px}
-.agent-card .status-icon{position:absolute;top:8px;right:8px;font-size:16px;opacity:0;transition:opacity .3s}
-
-.agent-card.working{border-color:var(--gold);animation:pulse 1.5s ease-in-out infinite}
-.agent-card.working .status-icon{opacity:1}
-.agent-card.done{border-color:var(--green)}
-.agent-card.done .status-icon{opacity:1}
-.agent-card.error{border-color:var(--red)}
-.agent-card.error .status-icon{opacity:1}
-
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(246,173,85,.3)}50%{box-shadow:0 0 0 8px rgba(246,173,85,0)}}
-
-/* Status Bar */
-.status-bar{text-align:center;padding:12px;font-size:14px;color:var(--text-light);display:none;align-items:center;justify-content:center;gap:8px}
-.status-bar.visible{display:flex}
-.status-bar .spinner{width:18px;height:18px;border:2px solid var(--gray);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* Plan Result */
-.plan-result{background:var(--card);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-top:20px;display:none}
-.plan-result.visible{display:block}
-.plan-result h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:var(--blue)}
-.plan-stats{display:flex;gap:16px;margin-bottom:16px;padding:12px 16px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text-light);flex-wrap:wrap}
-.plan-stats .stat{display:flex;align-items:center;gap:4px}
-
-/* Markdown Content */
-.plan-content{line-height:1.8;font-size:15px}
-.plan-content h1{font-size:22px;color:var(--blue);margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gray)}
-.plan-content h2{font-size:18px;color:var(--blue);margin:18px 0 8px}
-.plan-content h3{font-size:16px;color:var(--blue-light);margin:14px 0 6px}
-.plan-content h4{font-size:15px;color:var(--text);margin:12px 0 4px}
-.plan-content p{margin:8px 0}
-.plan-content ul,.plan-content ol{margin:8px 0 8px 20px}
-.plan-content li{margin:4px 0}
-.plan-content strong{color:var(--blue)}
-.plan-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
-.plan-content th{background:var(--blue);color:#fff;padding:8px 12px;text-align:left}
-.plan-content td{padding:8px 12px;border-bottom:1px solid var(--gray)}
-.plan-content tr:nth-child(even){background:#f8fafc}
-.plan-content blockquote{border-left:3px solid var(--gold);padding:8px 16px;margin:10px 0;background:#fffaf0;border-radius:0 8px 8px 0;color:var(--text-light)}
-.plan-content hr{border:none;border-top:1px solid var(--gray);margin:16px 0}
-.plan-content code{background:#edf2f7;padding:2px 6px;border-radius:4px;font-size:13px}
-
-/* History View */
-.history-empty{text-align:center;padding:60px 20px;color:var(--text-light)}
-.history-list{display:flex;flex-direction:column;gap:12px}
-.history-card{background:var(--card);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center}
-.history-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
-.history-card .info h3{font-size:15px;margin-bottom:4px}
-.history-card .info p{font-size:13px;color:var(--text-light)}
-.history-card .meta{text-align:right;font-size:13px;color:var(--text-light);flex-shrink:0}
-.back-btn{background:none;border:1px solid var(--gray-dark);color:var(--text-light);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;margin-bottom:16px;transition:all .2s}
-.back-btn:hover{border-color:var(--blue);color:var(--blue)}
-
-/* Error */
-.error-msg{background:#fff5f5;border:1px solid var(--red);color:#c53030;border-radius:8px;padding:14px 18px;margin-top:16px;display:none;font-size:14px}
-.error-msg.visible{display:block}
-
-/* Responsive */
-@media(max-width:768px){
-  .agents-grid{grid-template-columns:repeat(2,1fr)}
-  .container{padding:14px}
-  .header h1{font-size:17px}
-}
-@media(max-width:480px){
-  .agents-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-  .agent-card{padding:12px 8px}
-  .agent-card .emoji{font-size:26px}
-  .plan-stats{flex-direction:column;gap:6px}
-  .input-row{flex-direction:column;gap:10px;align-items:stretch}
-  .btn-plan{justify-content:center}
-}
-
-/* Connection Banner */
-.conn-banner{padding:10px 20px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .3s}
+.conn-banner{padding:6px 16px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0}
 .conn-banner.checking{background:#ebf8ff;color:#2b6cb0}
 .conn-banner.ok{background:#f0fff4;color:#276749}
 .conn-banner.fail{background:#fff5f5;color:#c53030}
-.conn-banner button{background:none;border:1px solid currentColor;color:inherit;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px}
-.conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.conn-banner button{background:none;border:1px solid currentColor;color:inherit;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px}
+.conn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .conn-banner.checking .conn-dot{background:#63b3ed;animation:blink 1s infinite}
 .conn-banner.ok .conn-dot{background:#48bb78}
 .conn-banner.fail .conn-dot{background:#fc8181}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* Footer */
-.footer{text-align:center;padding:16px;font-size:12px;color:var(--gray-dark)}
+.view{display:none;flex:1;overflow:hidden;flex-direction:column}
+.view.active{display:flex}
+
+/* Chat View */
+.chat-container{flex:1;display:flex;flex-direction:column;max-width:800px;width:100%;margin:0 auto;overflow:hidden}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:85%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.7;word-wrap:break-word}
+.msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.bot{background:var(--card);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;box-shadow:var(--shadow)}
+.msg.bot .sender{font-size:12px;color:var(--gold);font-weight:600;margin-bottom:4px}
+.msg.system{background:#ebf8ff;color:#2b6cb0;align-self:center;font-size:13px;border-radius:8px;text-align:center}
+.msg.bot p{margin:4px 0}.msg.bot ul,.msg.bot ol{margin:4px 0 4px 16px}
+
+/* Checklist Card */
+.checklist-card{background:linear-gradient(135deg,#fffaf0,#fff);border:2px solid var(--gold);border-radius:var(--radius);padding:20px;margin:8px 0;max-width:90%;align-self:center;box-shadow:0 4px 20px rgba(246,173,85,.15)}
+.checklist-card h3{color:var(--blue);font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.checklist-card table{width:100%;font-size:13px;border-collapse:collapse}
+.checklist-card td{padding:6px 10px;border-bottom:1px solid #feebc8}
+.checklist-card td:first-child{color:var(--text-light);width:80px;font-weight:500}
+.checklist-card td:last-child{color:var(--text)}
+.checklist-card .actions{margin-top:14px;display:flex;gap:10px;justify-content:center}
+.btn-confirm{background:linear-gradient(135deg,var(--green),#38a169);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(72,187,120,.4)}
+.btn-modify{background:none;border:1px solid var(--gray-dark);color:var(--text-light);padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;transition:all .2s}
+.btn-modify:hover{border-color:var(--blue);color:var(--blue)}
+
+/* Typing indicator */
+.typing{align-self:flex-start;display:none;padding:10px 16px;background:var(--card);border-radius:16px;border-bottom-left-radius:4px;box-shadow:var(--shadow)}
+.typing.visible{display:flex;align-items:center;gap:4px}
+.typing span{width:7px;height:7px;background:var(--gray-dark);border-radius:50%;animation:typingDot 1.4s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes typingDot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* Agent progress bar */
+.agents-bar{display:none;padding:8px 16px;flex-shrink:0;background:var(--card);border-top:1px solid var(--gray)}
+.agents-bar.visible{display:block}
+.agents-bar .bar-inner{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:800px;margin:0 auto}
+.agent-chip{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;background:var(--bg);border:1px solid var(--gray);transition:all .3s}
+.agent-chip.working{border-color:var(--gold);background:#fffaf0;animation:pulse 1.5s ease-in-out infinite}
+.agent-chip.done{border-color:var(--green);background:#f0fff4}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(246,173,85,.3)}50%{box-shadow:0 0 0 4px rgba(246,173,85,0)}}
+.timer-text{text-align:center;font-size:12px;color:var(--text-light);margin-top:6px}
+
+/* Chat input */
+.chat-input-area{flex-shrink:0;padding:10px 16px;background:var(--card);border-top:1px solid var(--gray)}
+.chat-input-row{display:flex;gap:8px;max-width:800px;margin:0 auto;align-items:flex-end}
+.chat-input-row textarea{flex:1;border:2px solid var(--gray);border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;resize:none;outline:none;max-height:100px;min-height:42px;line-height:1.5;transition:border-color .2s}
+.chat-input-row textarea:focus{border-color:var(--gold)}
+.btn-send{background:linear-gradient(135deg,var(--gold),#ed8936);color:#fff;border:none;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.btn-send:hover{transform:scale(1.05)}.btn-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* Plan result area (inside chat) */
+.plan-result-chat{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);max-width:95%;align-self:center;margin:8px 0}
+.plan-result-chat h2{font-size:16px;margin-bottom:10px;color:var(--blue);display:flex;align-items:center;gap:6px}
+.plan-stats{display:flex;gap:12px;margin-bottom:12px;padding:8px 12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-light);flex-wrap:wrap}
+.plan-content{line-height:1.8;font-size:14px}
+.plan-content h1{font-size:20px;color:var(--blue);margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--gray)}
+.plan-content h2{font-size:17px;color:var(--blue);margin:14px 0 6px}
+.plan-content h3{font-size:15px;color:var(--blue-light);margin:12px 0 4px}
+.plan-content p{margin:6px 0}
+.plan-content ul,.plan-content ol{margin:6px 0 6px 18px}
+.plan-content li{margin:3px 0}
+.plan-content strong{color:var(--blue)}
+.plan-content table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+.plan-content th{background:var(--blue);color:#fff;padding:6px 10px;text-align:left}
+.plan-content td{padding:6px 10px;border-bottom:1px solid var(--gray)}
+.plan-content tr:nth-child(even){background:#f8fafc}
+.plan-content blockquote{border-left:3px solid var(--gold);padding:6px 12px;margin:8px 0;background:#fffaf0;border-radius:0 8px 8px 0;color:var(--text-light)}
+.plan-content hr{border:none;border-top:1px solid var(--gray);margin:12px 0}
+.plan-content code{background:#edf2f7;padding:2px 5px;border-radius:4px;font-size:12px}
+
+/* History View */
+.history-view{flex:1;overflow-y:auto;padding:16px;max-width:800px;width:100%;margin:0 auto}
+.history-empty{text-align:center;padding:60px 20px;color:var(--text-light)}
+.history-list{display:flex;flex-direction:column;gap:10px}
+.history-card{background:var(--card);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center}
+.history-card:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.history-card .info h3{font-size:14px;margin-bottom:3px}
+.history-card .info p{font-size:12px;color:var(--text-light)}
+.history-card .meta{text-align:right;font-size:12px;color:var(--text-light);flex-shrink:0}
+.back-btn{background:none;border:1px solid var(--gray-dark);color:var(--text-light);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:12px}
+
+@media(max-width:600px){.msg{max-width:92%}.checklist-card{max-width:96%}.plan-result-chat{max-width:98%}}
 </style>
 </head>
 <body>
-
 <div class="header">
-  <h1><span>&#x1f9ed;</span> TravelClaw AI旅行规划</h1>
+  <h1>&#x1f9ed; TravelClaw AI旅行规划</h1>
   <div class="nav">
-    <button class="active" onclick="switchView('plan')">规划</button>
+    <button class="active" onclick="switchView('chat')">规划</button>
     <button onclick="switchView('history')">历史</button>
   </div>
 </div>
-
 <div class="conn-banner checking" id="conn-banner">
   <span class="conn-dot"></span>
-  <span id="conn-text">正在检测 GLM-5.1 API 连接...</span>
+  <span id="conn-text">检测API连接...</span>
   <button onclick="checkConnection()">重新检测</button>
 </div>
 
-<div class="container">
-  <!-- Plan View -->
-  <div id="view-plan" class="view active">
-    <div class="input-section">
-      <label>描述你的旅行需求</label>
-      <textarea id="request-input" placeholder="例如：10天新疆伊犁大环线自驾游，预算1.5万，2人出行，喜欢自然风光和当地美食"></textarea>
-      <div class="input-row">
-        <span class="hint">越详细越好：目的地、天数、预算、人数、偏好</span>
-        <button class="btn-plan" id="btn-plan" onclick="startPlanning()">&#x1f680; 开始规划</button>
-      </div>
+<!-- Chat View -->
+<div id="view-chat" class="view active">
+  <div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg system">&#x1f44b; 你好！我是你的旅行规划顾问。告诉我你想去哪里旅行吧，我会帮你细化需求，然后安排专家团队为你定制完美行程。</div>
     </div>
-
-    <div class="agents-grid" id="agents-grid">
-      <div class="agent-card" data-agent="food">
-        <div class="status-icon"></div>
-        <div class="emoji">&#x1f35c;</div>
-        <div class="domain">吃</div>
-        <div class="label">美食顾问</div>
+    <div class="typing" id="typing"><span></span><span></span><span></span></div>
+    <div class="agents-bar" id="agents-bar">
+      <div class="bar-inner">
+        <div class="agent-chip" data-agent="food">&#x1f35c; 美食</div>
+        <div class="agent-chip" data-agent="hotel">&#x1f3e8; 住宿</div>
+        <div class="agent-chip" data-agent="transport">&#x1f684; 交通</div>
+        <div class="agent-chip" data-agent="attraction">&#x1f3ef; 景点</div>
+        <div class="agent-chip" data-agent="shopping">&#x1f6cd;&#xfe0f; 购物</div>
+        <div class="agent-chip" data-agent="entertainment">&#x1f3ad; 娱乐</div>
       </div>
-      <div class="agent-card" data-agent="hotel">
-        <div class="status-icon"></div>
-        <div class="emoji">&#x1f3e8;</div>
-        <div class="domain">住</div>
-        <div class="label">住宿顾问</div>
-      </div>
-      <div class="agent-card" data-agent="transport">
-        <div class="status-icon"></div>
-        <div class="emoji">&#x1f684;</div>
-        <div class="domain">行</div>
-        <div class="label">交通顾问</div>
-      </div>
-      <div class="agent-card" data-agent="attraction">
-        <div class="status-icon"></div>
-        <div class="emoji">&#x1f3ef;</div>
-        <div class="domain">游</div>
-        <div class="label">景点顾问</div>
-      </div>
-      <div class="agent-card" data-agent="shopping">
-        <div class="status-icon"></div>
-        <div class="emoji">&#x1f6cd;&#xfe0f;</div>
-        <div class="domain">购</div>
-        <div class="label">购物顾问</div>
-      </div>
-      <div class="agent-card" data-agent="entertainment">
-        <div class="status-icon"></div>
-        <div class="emoji">&#x1f3ad;</div>
-        <div class="domain">娱</div>
-        <div class="label">娱乐顾问</div>
-      </div>
-    </div>
-
-    <div class="status-bar" id="status-bar">
-      <div class="spinner"></div>
-      <span id="status-text">准备中...</span>
-    </div>
-
-    <div class="error-msg" id="error-msg"></div>
-
-    <div class="plan-result" id="plan-result">
-      <h2>&#x1f4cb; 行程方案</h2>
-      <div class="plan-stats" id="plan-stats"></div>
-      <div class="plan-content" id="plan-content"></div>
+      <div class="timer-text" id="timer-text"></div>
     </div>
   </div>
-
-  <!-- History View -->
-  <div id="view-history" class="view">
-    <div id="history-list-container">
-      <h2 style="margin-bottom:16px;font-size:18px;color:var(--blue)">&#x1f4da; 行程历史</h2>
-      <div id="history-list" class="history-list"></div>
-    </div>
-    <div id="history-detail" style="display:none">
-      <button class="back-btn" onclick="showHistoryList()">&larr; 返回列表</button>
-      <div class="plan-result visible">
-        <h2>&#x1f4cb; 行程详情</h2>
-        <div class="plan-stats" id="detail-stats"></div>
-        <div class="plan-content" id="detail-content"></div>
-      </div>
+  <div class="chat-input-area">
+    <div class="chat-input-row">
+      <textarea id="chat-input" rows="1" placeholder="输入你的旅行想法..." oninput="autoResize(this)"></textarea>
+      <button class="btn-send" id="btn-send" onclick="sendMessage()">&#x27A4;</button>
     </div>
   </div>
 </div>
 
-<div class="footer">Powered by TravelClaw AI &middot; GLM-5.1</div>
+<!-- History View -->
+<div id="view-history" class="view">
+  <div class="history-view">
+    <div id="history-list-container">
+      <h2 style="margin-bottom:14px;font-size:17px;color:var(--blue)">&#x1f4da; 行程历史</h2>
+      <div id="history-list" class="history-list"></div>
+    </div>
+    <div id="history-detail" style="display:none">
+      <button class="back-btn" onclick="showHistoryList()">&larr; 返回</button>
+      <div class="plan-result-chat"><h2>&#x1f4cb; 行程详情</h2><div class="plan-stats" id="detail-stats"></div><div class="plan-content" id="detail-content"></div></div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script>
-// ── Connection Check ──
-let llmReady = false;
+let ws = null, llmReady = false, busy = false, timerInterval = null, startTime = 0;
 
-async function checkConnection() {
-  const banner = document.getElementById('conn-banner');
-  const text = document.getElementById('conn-text');
-  banner.className = 'conn-banner checking';
-  text.textContent = '\u6b63\u5728\u68c0\u6d4b GLM-5.1 API \u8fde\u63a5...';
-  try {
-    const res = await fetch('/api/v1/health/llm');
-    const data = await res.json();
-    if (data.status === 'ok') {
-      banner.className = 'conn-banner ok';
-      text.textContent = 'GLM-5.1 API \u8fde\u63a5\u6b63\u5e38 \u00b7 \u5ef6\u8fdf ' + data.latency_ms + 'ms';
-      llmReady = true;
-    } else {
-      banner.className = 'conn-banner fail';
-      text.textContent = 'API \u8fde\u63a5\u5931\u8d25: ' + (data.error || '\u672a\u77e5\u9519\u8bef').substring(0, 80);
-      llmReady = false;
-    }
-  } catch (e) {
-    banner.className = 'conn-banner fail';
-    text.textContent = '\u670d\u52a1\u672a\u542f\u52a8\u6216\u7f51\u7edc\u9519\u8bef: ' + e.message;
-    llmReady = false;
-  }
+function renderMd(t){return typeof marked!=='undefined'&&typeof DOMPurify!=='undefined'?DOMPurify.sanitize(marked.parse(t||'')):((t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'))}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px'}
+function scrollBottom(){const c=document.getElementById('chat-messages');c.scrollTop=c.scrollHeight}
+
+// Connection
+async function checkConnection(){
+  const b=document.getElementById('conn-banner'),t=document.getElementById('conn-text');
+  b.className='conn-banner checking';t.textContent='\u68c0\u6d4bAPI\u8fde\u63a5...';
+  try{const r=await fetch('/api/v1/health/llm');const d=await r.json();
+    if(d.status==='ok'){b.className='conn-banner ok';t.textContent='GLM-5.1 \u8fde\u63a5\u6b63\u5e38 \u00b7 '+d.latency_ms+'ms';llmReady=true}
+    else{b.className='conn-banner fail';t.textContent='API\u5931\u8d25: '+(d.error||'').substring(0,60);llmReady=false}
+  }catch(e){b.className='conn-banner fail';t.textContent='\u7f51\u7edc\u9519\u8bef: '+e.message;llmReady=false}
 }
-
-// Auto-check on page load
 checkConnection();
 
-// ── State ──
-let planning = false;
-let timerInterval = null;
-let startTime = 0;
-
-// ── Markdown renderer ──
-function renderMarkdown(text) {
-  if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-    return DOMPurify.sanitize(marked.parse(text || ''));
-  }
-  // Fallback: basic escaping + line breaks
-  return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
-}
-
-// ── View Switching ──
-function switchView(name) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+// View switch
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
-  if (name === 'history') loadHistory();
+  if(name==='history')loadHistory();
 }
 
-// ── Agent Card State ──
-const statusIcons = { working: '\u23f3', done: '\u2705', error: '\u274c' };
-
-function setCardState(agentId, state) {
-  const card = document.querySelector('[data-agent="' + agentId + '"]');
-  if (!card) return;
-  card.className = 'agent-card ' + state;
-  card.querySelector('.status-icon').textContent = statusIcons[state] || '';
+// Add message to chat
+function addMsg(role, html, cls){
+  const c=document.getElementById('chat-messages');
+  const d=document.createElement('div');d.className='msg '+(cls||role);
+  if(role==='bot')d.innerHTML='<div class="sender">\u89c4\u5212\u987e\u95ee</div>'+html;
+  else d.innerHTML=html;
+  c.appendChild(d);scrollBottom();return d;
 }
 
-function resetAllCards() {
-  document.querySelectorAll('.agent-card').forEach(c => {
-    c.className = 'agent-card';
-    c.querySelector('.status-icon').textContent = '';
+// Add checklist card
+function addChecklist(data, message){
+  const c=document.getElementById('chat-messages');
+  if(message)addMsg('bot',renderMd(message));
+  const card=document.createElement('div');card.className='checklist-card';
+  const rows=[
+    ['\u76ee\u7684\u5730',data.destination],['\u5929\u6570',data.days+'\u5929'],
+    ['\u65f6\u95f4',data.dates||'-'],['\u51fa\u884c\u4eba',data.travelers||'-'],
+    ['\u9884\u7b97',data.budget||'-'],['\u4f4f\u5bbf',data.accommodation||'-'],
+    ['\u996e\u98df',data.food_preference||'-'],['\u4ea4\u901a',data.transport||'-'],
+    ['\u5174\u8da3',data.interests||'-'],['\u7279\u6b8a\u9700\u6c42',data.special_needs||'-']
+  ].filter(r=>r[1]&&r[1]!=='-');
+  card.innerHTML='<h3>&#x1f4cb; \u9700\u6c42\u786e\u8ba4\u6e05\u5355</h3><table>'+
+    rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+
+    '</table><div class="actions">'+
+    '<button class="btn-confirm" onclick="confirmPlan()">\u2705 \u786e\u8ba4\uff0c\u5f00\u59cb\u89c4\u5212</button>'+
+    '<button class="btn-modify" onclick="focusInput()">\u270f\ufe0f \u6211\u8981\u4fee\u6539</button></div>';
+  c.appendChild(card);scrollBottom();
+}
+
+function focusInput(){document.getElementById('chat-input').focus()}
+
+// WebSocket management
+function ensureWs(){
+  return new Promise((resolve,reject)=>{
+    if(ws&&ws.readyState===WebSocket.OPEN)return resolve(ws);
+    const proto=location.protocol==='https:'?'wss:':'ws:';
+    ws=new WebSocket(proto+'//'+location.host+'/api/v1/plan/stream');
+    ws.onopen=()=>resolve(ws);
+    ws.onerror=()=>reject(new Error('WebSocket\u8fde\u63a5\u5931\u8d25'));
+    ws.onmessage=handleWsMessage;
+    ws.onclose=()=>{ws=null;busy=false;setBtnEnabled(true);hideTyping()};
   });
 }
 
-// ── Timer ──
-function startTimer() {
-  startTime = Date.now();
-  const el = document.getElementById('status-text');
-  timerInterval = setInterval(() => {
-    const sec = Math.floor((Date.now() - startTime) / 1000);
-    el.textContent = '\u6b63\u5728\u89c4\u5212\u4e2d... \u5df2\u7528\u65f6 ' + sec + ' \u79d2';
-  }, 1000);
-}
-
-function stopTimer() {
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-}
-
-// ── Status / Error ──
-function showStatus(text) {
-  const bar = document.getElementById('status-bar');
-  bar.classList.add('visible');
-  document.getElementById('status-text').textContent = text;
-}
-
-function hideStatus() {
-  document.getElementById('status-bar').classList.remove('visible');
-  stopTimer();
-}
-
-function showError(msg) {
-  const el = document.getElementById('error-msg');
-  el.textContent = '\u274c ' + msg;
-  el.classList.add('visible');
-}
-
-function hideError() {
-  document.getElementById('error-msg').classList.remove('visible');
-}
-
-// ── Planning via WebSocket ──
-function startPlanning() {
-  const input = document.getElementById('request-input');
-  const text = input.value.trim();
-  if (!text) { input.focus(); return; }
-  if (planning) return;
-  if (!llmReady) {
-    hideError();
-    showError('GLM API \u8fde\u63a5\u5f02\u5e38\uff0c\u8bf7\u5148\u70b9\u51fb\u9876\u90e8\u201c\u91cd\u65b0\u68c0\u6d4b\u201d\u786e\u8ba4 API \u53ef\u7528');
-    return;
+function handleWsMessage(e){
+  const ev=JSON.parse(e.data);
+  switch(ev.type){
+    case 'reply': hideTyping();addMsg('bot',renderMd(ev.content));busy=false;setBtnEnabled(true);break;
+    case 'checklist': hideTyping();addChecklist(ev.data,ev.message);busy=false;setBtnEnabled(true);break;
+    case 'plan_start': addMsg('system','\u26a1 \u4e13\u5bb6\u56e2\u961f\u5f00\u59cb\u89c4\u5212...');showAgentsBar();startTimer();break;
+    case 'decompose_start': break;
+    case 'agent_start': setChipState(ev.agent_id,'working');break;
+    case 'agent_done': setChipState(ev.agent_id,'done');break;
+    case 'agent_error': setChipState(ev.agent_id,'error');break;
+    case 'plan_complete': stopTimer();hideAgentsBar();showPlanResult(ev.data);busy=false;setBtnEnabled(true);break;
+    case 'plan_error': case 'error':
+      stopTimer();hideTyping();hideAgentsBar();
+      addMsg('system','\u274c '+(typeof ev.data==='string'?ev.data:JSON.stringify(ev.data)));
+      busy=false;setBtnEnabled(true);break;
   }
-
-  planning = true;
-  document.getElementById('btn-plan').disabled = true;
-  document.getElementById('plan-result').classList.remove('visible');
-  hideError();
-  resetAllCards();
-  showStatus('\u8fde\u63a5\u4e2d...');
-
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const ws = new WebSocket(proto + '//' + location.host + '/api/v1/plan/stream');
-
-  ws.onopen = () => {
-    showStatus('\u53d1\u9001\u8bf7\u6c42...');
-    ws.send(JSON.stringify({ request: text }));
-  };
-
-  ws.onmessage = (e) => {
-    const ev = JSON.parse(e.data);
-    switch (ev.type) {
-      case 'plan_start':
-        showStatus('\u89c4\u5212\u5f00\u59cb...');
-        startTimer();
-        break;
-      case 'decompose_start':
-        showStatus('\u6b63\u5728\u878d\u5408\u4e13\u5bb6\u77e5\u8bc6...');
-        break;
-      case 'agent_start':
-        setCardState(ev.agent_id, 'working');
-        break;
-      case 'agent_done':
-        setCardState(ev.agent_id, 'done');
-        break;
-      case 'agent_error':
-        setCardState(ev.agent_id, 'error');
-        break;
-      case 'plan_complete':
-        stopTimer();
-        hideStatus();
-        showPlanResult(ev.data);
-        break;
-      case 'plan_error':
-        stopTimer();
-        hideStatus();
-        showError(typeof ev.data === 'string' ? ev.data : JSON.stringify(ev.data));
-        break;
-      case 'error':
-        stopTimer();
-        hideStatus();
-        showError(typeof ev.data === 'string' ? ev.data : JSON.stringify(ev.data));
-        break;
-    }
-  };
-
-  ws.onerror = () => {
-    stopTimer();
-    hideStatus();
-    showError('WebSocket \u8fde\u63a5\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u670d\u52a1\u662f\u5426\u8fd0\u884c');
-  };
-
-  ws.onclose = () => {
-    planning = false;
-    document.getElementById('btn-plan').disabled = false;
-  };
 }
 
-// ── Show Plan Result ──
-function showPlanResult(data) {
-  const sec = (data.duration_ms / 1000).toFixed(1);
-  const agentNames = {
-    food: '\u7f8e\u98df', hotel: '\u4f4f\u5bbf', transport: '\u4ea4\u901a',
-    attraction: '\u666f\u70b9', shopping: '\u8d2d\u7269', entertainment: '\u5a31\u4e50'
-  };
-  const usedStr = (data.agents_used || []).map(a => agentNames[a] || a).join(' \u00b7 ');
-
-  document.getElementById('plan-stats').innerHTML =
-    '<span class="stat">\u23f1\ufe0f \u8017\u65f6 ' + sec + ' \u79d2</span>' +
-    '<span class="stat">\ud83d\udc65 \u53c2\u4e0e\u4e13\u5bb6: ' + usedStr + '</span>';
-  document.getElementById('plan-content').innerHTML = renderMarkdown(data.plan);
-  document.getElementById('plan-result').classList.add('visible');
-  document.getElementById('plan-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+// Send chat message
+async function sendMessage(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text||busy)return;
+  if(!llmReady){addMsg('system','\u274c API\u672a\u8fde\u63a5\uff0c\u8bf7\u70b9\u51fb\u9876\u90e8\u91cd\u65b0\u68c0\u6d4b');return}
+  addMsg('user',text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'));
+  input.value='';autoResize(input);
+  busy=true;setBtnEnabled(false);showTyping();
+  try{const s=await ensureWs();s.send(JSON.stringify({type:'message',content:text}))}
+  catch(e){hideTyping();addMsg('system','\u274c '+e.message);busy=false;setBtnEnabled(true)}
 }
 
-// ── History ──
-async function loadHistory() {
-  const container = document.getElementById('history-list');
-  try {
-    const res = await fetch('/api/v1/plans?user_id=anonymous');
-    const data = await res.json();
-    if (!data.trips || data.trips.length === 0) {
-      container.innerHTML = '<div class="history-empty">\ud83d\udced \u8fd8\u6ca1\u6709\u884c\u7a0b\u8bb0\u5f55\uff0c\u53bb\u89c4\u5212\u4e00\u4e2a\u5427\uff01</div>';
-      return;
-    }
-    container.innerHTML = data.trips.map(t => {
-      const date = new Date(t.created_at).toLocaleDateString('zh-CN');
-      const sec = t.duration_ms ? (t.duration_ms / 1000).toFixed(0) + '\u79d2' : '-';
-      return '<div class="history-card" onclick="loadTripDetail(\'' + t.id + '\')">' +
-        '<div class="info"><h3>' + (t.destination || '\u65c5\u884c\u89c4\u5212') + '</h3>' +
-        '<p>' + (t.days || '?') + '\u5929 \u00b7 ' + t.status + '</p></div>' +
-        '<div class="meta">' + date + '<br>\u8017\u65f6 ' + sec + '</div></div>';
-    }).join('');
-  } catch (e) {
-    container.innerHTML = '<div class="history-empty">\u52a0\u8f7d\u5931\u8d25: ' + e.message + '</div>';
-  }
+// Confirm checklist -> start planning
+async function confirmPlan(){
+  if(busy)return;
+  addMsg('user','\u2705 \u786e\u8ba4\uff0c\u5f00\u59cb\u89c4\u5212\uff01');
+  busy=true;setBtnEnabled(false);
+  try{const s=await ensureWs();s.send(JSON.stringify({type:'confirm'}))}
+  catch(e){addMsg('system','\u274c '+e.message);busy=false;setBtnEnabled(true)}
+}
+
+function setBtnEnabled(on){document.getElementById('btn-send').disabled=!on}
+function showTyping(){document.getElementById('typing').classList.add('visible');scrollBottom()}
+function hideTyping(){document.getElementById('typing').classList.remove('visible')}
+
+// Agent chips
+function showAgentsBar(){document.getElementById('agents-bar').classList.add('visible');
+  document.querySelectorAll('.agent-chip').forEach(c=>c.className='agent-chip')}
+function hideAgentsBar(){document.getElementById('agents-bar').classList.remove('visible')}
+function setChipState(id,st){const c=document.querySelector('.agent-chip[data-agent="'+id+'"]');
+  if(c)c.className='agent-chip '+st}
+
+function startTimer(){startTime=Date.now();const el=document.getElementById('timer-text');
+  timerInterval=setInterval(()=>{const s=Math.floor((Date.now()-startTime)/1000);el.textContent='\u89c4\u5212\u4e2d... '+s+'\u79d2'},1000)}
+function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}document.getElementById('timer-text').textContent=''}
+
+function showPlanResult(data){
+  const sec=(data.duration_ms/1000).toFixed(1);
+  const names={food:'\u7f8e\u98df',hotel:'\u4f4f\u5bbf',transport:'\u4ea4\u901a',attraction:'\u666f\u70b9',shopping:'\u8d2d\u7269',entertainment:'\u5a31\u4e50'};
+  const used=(data.agents_used||[]).map(a=>names[a]||a).join(' \u00b7 ');
+  const c=document.getElementById('chat-messages');
+  const d=document.createElement('div');d.className='plan-result-chat';
+  d.innerHTML='<h2>&#x1f4cb; \u884c\u7a0b\u65b9\u6848</h2>'+
+    '<div class="plan-stats"><span>\u23f1\ufe0f '+sec+'\u79d2</span><span>\ud83d\udc65 '+used+'</span></div>'+
+    '<div class="plan-content">'+renderMd(data.plan)+'</div>';
+  c.appendChild(d);scrollBottom();
+}
+
+// History
+async function loadHistory(){
+  const c=document.getElementById('history-list');
+  try{const r=await fetch('/api/v1/plans?user_id=anonymous');const d=await r.json();
+    if(!d.trips||!d.trips.length){c.innerHTML='<div class="history-empty">\ud83d\udced \u8fd8\u6ca1\u6709\u884c\u7a0b</div>';return}
+    c.innerHTML=d.trips.map(t=>{const dt=new Date(t.created_at).toLocaleDateString('zh-CN');
+      return '<div class="history-card" onclick="loadTripDetail(\''+t.id+'\')"><div class="info"><h3>'+(t.destination||'\u65c5\u884c\u89c4\u5212')+'</h3><p>'+(t.days||'?')+'\u5929</p></div><div class="meta">'+dt+'</div></div>'}).join('')
+  }catch(e){c.innerHTML='<div class="history-empty">\u52a0\u8f7d\u5931\u8d25</div>'}
   showHistoryList();
 }
-
-async function loadTripDetail(planId) {
-  document.getElementById('history-list-container').style.display = 'none';
-  document.getElementById('history-detail').style.display = 'block';
-  try {
-    const res = await fetch('/api/v1/plan/' + planId);
-    const trip = await res.json();
-    const sec = trip.duration_ms ? (trip.duration_ms / 1000).toFixed(1) + '\u79d2' : '-';
-    const agents = trip.agents_used ? trip.agents_used.join(' \u00b7 ') : '-';
-    document.getElementById('detail-stats').innerHTML =
-      '<span class="stat">\ud83d\udccd ' + (trip.destination || '-') + '</span>' +
-      '<span class="stat">\ud83d\udcc5 ' + (trip.days || '?') + '\u5929</span>' +
-      '<span class="stat">\u23f1\ufe0f ' + sec + '</span>';
-    document.getElementById('detail-content').innerHTML = renderMarkdown(trip.plan);
-  } catch (e) {
-    document.getElementById('detail-content').innerHTML = '<p>\u52a0\u8f7d\u5931\u8d25: ' + e.message + '</p>';
-  }
+async function loadTripDetail(id){
+  document.getElementById('history-list-container').style.display='none';
+  document.getElementById('history-detail').style.display='block';
+  try{const r=await fetch('/api/v1/plan/'+id);const t=await r.json();
+    document.getElementById('detail-stats').innerHTML='<span>\ud83d\udccd '+(t.destination||'-')+'</span><span>\ud83d\udcc5 '+(t.days||'?')+'\u5929</span>';
+    document.getElementById('detail-content').innerHTML=renderMd(t.plan)}
+  catch(e){document.getElementById('detail-content').innerHTML='\u52a0\u8f7d\u5931\u8d25'}
 }
+function showHistoryList(){document.getElementById('history-list-container').style.display='block';document.getElementById('history-detail').style.display='none'}
 
-function showHistoryList() {
-  document.getElementById('history-list-container').style.display = 'block';
-  document.getElementById('history-detail').style.display = 'none';
-}
-
-// ── Enter key to submit ──
-document.getElementById('request-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    startPlanning();
-  }
-});
+// Enter to send
+document.getElementById('chat-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 </script>
 </body>
 </html>
