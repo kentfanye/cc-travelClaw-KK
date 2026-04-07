@@ -44,6 +44,37 @@ def _mock_openai_response(text: str) -> MagicMock:
     return resp
 
 
+def _mock_stream_chunks(text: str):
+    """创建模拟流式响应的chunk列表（同步迭代器）"""
+    chunks = []
+    for char in text:
+        chunk = MagicMock()
+        delta = MagicMock()
+        delta.content = char
+        delta.reasoning_content = None
+        chunk.choices = [MagicMock(delta=delta)]
+        chunks.append(chunk)
+    return chunks
+
+
+class _AsyncChunkIterator:
+    """模拟异步流式响应"""
+
+    def __init__(self, text: str):
+        self._chunks = _mock_stream_chunks(text)
+        self._index = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self._index >= len(self._chunks):
+            raise StopAsyncIteration
+        chunk = self._chunks[self._index]
+        self._index += 1
+        return chunk
+
+
 # ── 1. Pydantic模型校验 ──────────────────────────────────
 
 
@@ -261,12 +292,11 @@ class TestOrchestrator:
             orch.integrate_results(results)
 
     def test_unified_plan_sync(self):
-        """核心测试：单次调用模式的完整规划"""
+        """核心测试：单次调用模式的完整规划（流式）"""
         orch = self._make_orchestrator()
+        plan_text = "完整行程方案: Day1 浅草寺 → 寿司大 → 新宿酒店..."
         mock_client = MagicMock()
-        mock_client.chat.completions.create.return_value = _mock_openai_response(
-            "完整行程方案: Day1 浅草寺 → 寿司大 → 新宿酒店..."
-        )
+        mock_client.chat.completions.create.return_value = _mock_stream_chunks(plan_text)
         orch._client = mock_client
 
         agents = self._make_mock_agents("food", "hotel")
@@ -277,17 +307,15 @@ class TestOrchestrator:
         assert "完整行程方案" in response.plan
         assert set(response.agents_used) == {"food", "hotel"}
         assert response.duration_ms >= 0
-        # 单次调用：LLM只被调了1次
         assert mock_client.chat.completions.create.call_count == 1
 
     @pytest.mark.asyncio
     async def test_unified_plan_async(self):
-        """核心测试：异步单次调用"""
+        """核心测试：异步单次调用（流式）"""
         orch = self._make_orchestrator()
+        plan_text = "大阪3日行程: Day1 道顿堀..."
         mock_client = AsyncMock()
-        mock_client.chat.completions.create.return_value = _mock_openai_response(
-            "大阪3日行程: Day1 道顿堀..."
-        )
+        mock_client.chat.completions.create.return_value = _AsyncChunkIterator(plan_text)
         orch._async_client = mock_client
 
         agents = self._make_mock_agents("food", "attraction")
@@ -296,7 +324,6 @@ class TestOrchestrator:
         assert isinstance(response, PlanResponse)
         assert "大阪3日行程" in response.plan
         assert set(response.agents_used) == {"food", "attraction"}
-        # 单次调用
         assert mock_client.chat.completions.create.call_count == 1
 
 

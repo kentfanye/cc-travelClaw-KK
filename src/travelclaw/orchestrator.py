@@ -126,35 +126,66 @@ class Orchestrator:
             )
         return self._async_client
 
-    # ── 核心：单次调用规划 ────────────────────────────────
+    # ── 核心：流式调用规划（保持连接活跃） ────────────────
 
     @with_retry(max_attempts=5)
     def unified_plan_call(self, user_request: str, agents: dict[str, Agent]) -> str:
-        """单次LLM调用完成完整规划（同步）。"""
+        """单次LLM调用完成完整规划（同步，流式接收）。"""
         system_prompt = _build_team_system_prompt(self.soul, agents)
-        response = self.client.chat.completions.create(
+        stream = self.client.chat.completions.create(
             model=self.model,
             max_tokens=8192,
+            stream=True,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": UNIFIED_PLAN_PROMPT + "\n\n用户需求：" + user_request},
             ],
         )
-        return _extract_reply(response.choices[0].message)
+        # 流式收集：每个chunk都有数据流动，防止idle连接被杀
+        content_parts = []
+        reasoning_parts = []
+        for chunk in stream:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta:
+                if delta.content:
+                    content_parts.append(delta.content)
+                # GLM-5.1推理模型的reasoning_content
+                rc = getattr(delta, "reasoning_content", None)
+                if rc:
+                    reasoning_parts.append(rc)
+        result = "".join(content_parts)
+        if not result and reasoning_parts:
+            result = "".join(reasoning_parts)
+        return result
 
     @with_async_retry(max_attempts=5)
     async def aunified_plan_call(self, user_request: str, agents: dict[str, Agent]) -> str:
-        """单次LLM调用完成完整规划（异步）。"""
+        """单次LLM调用完成完整规划（异步，流式接收）。"""
         system_prompt = _build_team_system_prompt(self.soul, agents)
-        response = await self.async_client.chat.completions.create(
+        stream = await self.async_client.chat.completions.create(
             model=self.model,
             max_tokens=8192,
+            stream=True,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": UNIFIED_PLAN_PROMPT + "\n\n用户需求：" + user_request},
             ],
         )
-        return _extract_reply(response.choices[0].message)
+        # 异步流式收集：保持连接活跃
+        content_parts = []
+        reasoning_parts = []
+        async for chunk in stream:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta:
+                if delta.content:
+                    content_parts.append(delta.content)
+                rc = getattr(delta, "reasoning_content", None)
+                if rc:
+                    reasoning_parts.append(rc)
+        result = "".join(content_parts)
+        if not result and reasoning_parts:
+            result = "".join(reasoning_parts)
+        return result
 
     # ── 完整规划流程 ───────────────────────────────────────
 
