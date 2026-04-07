@@ -119,6 +119,18 @@ a{color:var(--blue);text-decoration:none}
   .btn-plan{justify-content:center}
 }
 
+/* Connection Banner */
+.conn-banner{padding:10px 20px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .3s}
+.conn-banner.checking{background:#ebf8ff;color:#2b6cb0}
+.conn-banner.ok{background:#f0fff4;color:#276749}
+.conn-banner.fail{background:#fff5f5;color:#c53030}
+.conn-banner button{background:none;border:1px solid currentColor;color:inherit;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px}
+.conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.conn-banner.checking .conn-dot{background:#63b3ed;animation:blink 1s infinite}
+.conn-banner.ok .conn-dot{background:#48bb78}
+.conn-banner.fail .conn-dot{background:#fc8181}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
 /* Footer */
 .footer{text-align:center;padding:16px;font-size:12px;color:var(--gray-dark)}
 </style>
@@ -131,6 +143,12 @@ a{color:var(--blue);text-decoration:none}
     <button class="active" onclick="switchView('plan')">规划</button>
     <button onclick="switchView('history')">历史</button>
   </div>
+</div>
+
+<div class="conn-banner checking" id="conn-banner">
+  <span class="conn-dot"></span>
+  <span id="conn-text">正在检测 GLM-5.1 API 连接...</span>
+  <button onclick="checkConnection()">重新检测</button>
 </div>
 
 <div class="container">
@@ -220,6 +238,36 @@ a{color:var(--blue);text-decoration:none}
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script>
+// ── Connection Check ──
+let llmReady = false;
+
+async function checkConnection() {
+  const banner = document.getElementById('conn-banner');
+  const text = document.getElementById('conn-text');
+  banner.className = 'conn-banner checking';
+  text.textContent = '\u6b63\u5728\u68c0\u6d4b GLM-5.1 API \u8fde\u63a5...';
+  try {
+    const res = await fetch('/api/v1/health/llm');
+    const data = await res.json();
+    if (data.status === 'ok') {
+      banner.className = 'conn-banner ok';
+      text.textContent = 'GLM-5.1 API \u8fde\u63a5\u6b63\u5e38 \u00b7 \u5ef6\u8fdf ' + data.latency_ms + 'ms';
+      llmReady = true;
+    } else {
+      banner.className = 'conn-banner fail';
+      text.textContent = 'API \u8fde\u63a5\u5931\u8d25: ' + (data.error || '\u672a\u77e5\u9519\u8bef').substring(0, 80);
+      llmReady = false;
+    }
+  } catch (e) {
+    banner.className = 'conn-banner fail';
+    text.textContent = '\u670d\u52a1\u672a\u542f\u52a8\u6216\u7f51\u7edc\u9519\u8bef: ' + e.message;
+    llmReady = false;
+  }
+}
+
+// Auto-check on page load
+checkConnection();
+
 // ── State ──
 let planning = false;
 let timerInterval = null;
@@ -302,6 +350,11 @@ function startPlanning() {
   const text = input.value.trim();
   if (!text) { input.focus(); return; }
   if (planning) return;
+  if (!llmReady) {
+    hideError();
+    showError('GLM API \u8fde\u63a5\u5f02\u5e38\uff0c\u8bf7\u5148\u70b9\u51fb\u9876\u90e8\u201c\u91cd\u65b0\u68c0\u6d4b\u201d\u786e\u8ba4 API \u53ef\u7528');
+    return;
+  }
 
   planning = true;
   document.getElementById('btn-plan').disabled = true;

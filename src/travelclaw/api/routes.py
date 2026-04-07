@@ -5,12 +5,15 @@ REST API 路由。
 from __future__ import annotations
 
 import logging
+import time
 
+import openai
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..agent import _DEFAULT_API_BASE, _DEFAULT_API_KEY, _extract_reply
 from ..errors import TravelClawError
 from ..models import PlanResponse
 from ..storage.database import get_engine
@@ -96,6 +99,39 @@ async def readiness(request: Request):
 async def list_agents(request: Request):
     team = request.app.state.team
     return {"agents": team.list_agents()}
+
+
+@router.get("/health/llm")
+async def llm_health():
+    """测试LLM API连通性 — 发送一个最小请求验证API是否可达。"""
+    start = time.monotonic()
+    try:
+        client = openai.AsyncOpenAI(
+            api_key=_DEFAULT_API_KEY, base_url=_DEFAULT_API_BASE, timeout=30.0
+        )
+        response = await client.chat.completions.create(
+            model="glm-5.1",
+            max_tokens=5,
+            messages=[{"role": "user", "content": "hi"}],
+        )
+        reply = _extract_reply(response.choices[0].message)
+        latency_ms = int((time.monotonic() - start) * 1000)
+        return {
+            "status": "ok",
+            "model": "glm-5.1",
+            "api_base": _DEFAULT_API_BASE,
+            "latency_ms": latency_ms,
+            "reply_preview": reply[:50],
+        }
+    except Exception as e:
+        latency_ms = int((time.monotonic() - start) * 1000)
+        return {
+            "status": "error",
+            "model": "glm-5.1",
+            "api_base": _DEFAULT_API_BASE,
+            "latency_ms": latency_ms,
+            "error": str(e),
+        }
 
 
 # ── Plan CRUD ─────────────────────────────────────────────
