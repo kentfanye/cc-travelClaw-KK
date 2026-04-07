@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelClaw AI 旅行规划</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#1a365d;--blue-light:#2a4a7f;--gold:#f6ad55;--gold-light:#fbd38d;
+  --green:#48bb78;--red:#fc8181;--gray:#e2e8f0;--gray-dark:#a0aec0;
+  --bg:#f7fafc;--card:#fff;--text:#2d3748;--text-light:#718096;
+  --radius:12px;--shadow:0 4px 14px rgba(0,0,0,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--blue);text-decoration:none}
+
+/* Header */
+.header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-light) 100%);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
+.header h1 span{font-size:24px}
+.nav{display:flex;gap:4px}
+.nav button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.3)}
+
+/* Container */
+.container{max-width:800px;width:100%;margin:0 auto;padding:20px;flex:1}
+
+/* Views */
+.view{display:none}.view.active{display:block}
+
+/* Input Section */
+.input-section{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+.input-section label{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;display:block}
+.input-section textarea{width:100%;border:2px solid var(--gray);border-radius:8px;padding:14px;font-size:15px;line-height:1.6;resize:vertical;min-height:100px;font-family:inherit;transition:border-color .2s;outline:none}
+.input-section textarea:focus{border-color:var(--gold)}
+.input-section textarea::placeholder{color:var(--gray-dark)}
+.input-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.hint{font-size:13px;color:var(--text-light)}
+.btn-plan{background:linear-gradient(135deg,var(--gold) 0%,#ed8936 100%);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.btn-plan:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(246,173,85,.4)}
+.btn-plan:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Agent Cards */
+.agents-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.agent-card{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow);border:2px solid transparent;transition:all .3s;position:relative;overflow:hidden}
+.agent-card .emoji{font-size:32px;margin-bottom:6px}
+.agent-card .domain{font-size:13px;color:var(--gold);font-weight:600;letter-spacing:2px}
+.agent-card .label{font-size:14px;color:var(--text-light);margin-top:2px}
+.agent-card .status-icon{position:absolute;top:8px;right:8px;font-size:16px;opacity:0;transition:opacity .3s}
+
+.agent-card.working{border-color:var(--gold);animation:pulse 1.5s ease-in-out infinite}
+.agent-card.working .status-icon{opacity:1}
+.agent-card.done{border-color:var(--green)}
+.agent-card.done .status-icon{opacity:1}
+.agent-card.error{border-color:var(--red)}
+.agent-card.error .status-icon{opacity:1}
+
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(246,173,85,.3)}50%{box-shadow:0 0 0 8px rgba(246,173,85,0)}}
+
+/* Status Bar */
+.status-bar{text-align:center;padding:12px;font-size:14px;color:var(--text-light);display:none;align-items:center;justify-content:center;gap:8px}
+.status-bar.visible{display:flex}
+.status-bar .spinner{width:18px;height:18px;border:2px solid var(--gray);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Plan Result */
+.plan-result{background:var(--card);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-top:20px;display:none}
+.plan-result.visible{display:block}
+.plan-result h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:var(--blue)}
+.plan-stats{display:flex;gap:16px;margin-bottom:16px;padding:12px 16px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text-light);flex-wrap:wrap}
+.plan-stats .stat{display:flex;align-items:center;gap:4px}
+
+/* Markdown Content */
+.plan-content{line-height:1.8;font-size:15px}
+.plan-content h1{font-size:22px;color:var(--blue);margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gray)}
+.plan-content h2{font-size:18px;color:var(--blue);margin:18px 0 8px}
+.plan-content h3{font-size:16px;color:var(--blue-light);margin:14px 0 6px}
+.plan-content h4{font-size:15px;color:var(--text);margin:12px 0 4px}
+.plan-content p{margin:8px 0}
+.plan-content ul,.plan-content ol{margin:8px 0 8px 20px}
+.plan-content li{margin:4px 0}
+.plan-content strong{color:var(--blue)}
+.plan-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+.plan-content th{background:var(--blue);color:#fff;padding:8px 12px;text-align:left}
+.plan-content td{padding:8px 12px;border-bottom:1px solid var(--gray)}
+.plan-content tr:nth-child(even){background:#f8fafc}
+.plan-content blockquote{border-left:3px solid var(--gold);padding:8px 16px;margin:10px 0;background:#fffaf0;border-radius:0 8px 8px 0;color:var(--text-light)}
+.plan-content hr{border:none;border-top:1px solid var(--gray);margin:16px 0}
+.plan-content code{background:#edf2f7;padding:2px 6px;border-radius:4px;font-size:13px}
+
+/* History View */
+.history-empty{text-align:center;padding:60px 20px;color:var(--text-light)}
+.history-list{display:flex;flex-direction:column;gap:12px}
+.history-card{background:var(--card);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center}
+.history-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.history-card .info h3{font-size:15px;margin-bottom:4px}
+.history-card .info p{font-size:13px;color:var(--text-light)}
+.history-card .meta{text-align:right;font-size:13px;color:var(--text-light);flex-shrink:0}
+.back-btn{background:none;border:1px solid var(--gray-dark);color:var(--text-light);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;margin-bottom:16px;transition:all .2s}
+.back-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+/* Error */
+.error-msg{background:#fff5f5;border:1px solid var(--red);color:#c53030;border-radius:8px;padding:14px 18px;margin-top:16px;display:none;font-size:14px}
+.error-msg.visible{display:block}
+
+/* Responsive */
+@media(max-width:768px){
+  .agents-grid{grid-template-columns:repeat(2,1fr)}
+  .container{padding:14px}
+  .header h1{font-size:17px}
+}
+@media(max-width:480px){
+  .agents-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .agent-card{padding:12px 8px}
+  .agent-card .emoji{font-size:26px}
+  .plan-stats{flex-direction:column;gap:6px}
+  .input-row{flex-direction:column;gap:10px;align-items:stretch}
+  .btn-plan{justify-content:center}
+}
+
+/* Footer */
+.footer{text-align:center;padding:16px;font-size:12px;color:var(--gray-dark)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>&#x1f9ed;</span> TravelClaw AI旅行规划</h1>
+  <div class="nav">
+    <button class="active" onclick="switchView('plan')">规划</button>
+    <button onclick="switchView('history')">历史</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Plan View -->
+  <div id="view-plan" class="view active">
+    <div class="input-section">
+      <label>描述你的旅行需求</label>
+      <textarea id="request-input" placeholder="例如：10天新疆伊犁大环线自驾游，预算1.5万，2人出行，喜欢自然风光和当地美食"></textarea>
+      <div class="input-row">
+        <span class="hint">越详细越好：目的地、天数、预算、人数、偏好</span>
+        <button class="btn-plan" id="btn-plan" onclick="startPlanning()">&#x1f680; 开始规划</button>
+      </div>
+    </div>
+
+    <div class="agents-grid" id="agents-grid">
+      <div class="agent-card" data-agent="food">
+        <div class="status-icon"></div>
+        <div class="emoji">&#x1f35c;</div>
+        <div class="domain">吃</div>
+        <div class="label">美食顾问</div>
+      </div>
+      <div class="agent-card" data-agent="hotel">
+        <div class="status-icon"></div>
+        <div class="emoji">&#x1f3e8;</div>
+        <div class="domain">住</div>
+        <div class="label">住宿顾问</div>
+      </div>
+      <div class="agent-card" data-agent="transport">
+        <div class="status-icon"></div>
+        <div class="emoji">&#x1f684;</div>
+        <div class="domain">行</div>
+        <div class="label">交通顾问</div>
+      </div>
+      <div class="agent-card" data-agent="attraction">
+        <div class="status-icon"></div>
+        <div class="emoji">&#x1f3ef;</div>
+        <div class="domain">游</div>
+        <div class="label">景点顾问</div>
+      </div>
+      <div class="agent-card" data-agent="shopping">
+        <div class="status-icon"></div>
+        <div class="emoji">&#x1f6cd;&#xfe0f;</div>
+        <div class="domain">购</div>
+        <div class="label">购物顾问</div>
+      </div>
+      <div class="agent-card" data-agent="entertainment">
+        <div class="status-icon"></div>
+        <div class="emoji">&#x1f3ad;</div>
+        <div class="domain">娱</div>
+        <div class="label">娱乐顾问</div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">
+      <div class="spinner"></div>
+      <span id="status-text">准备中...</span>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="plan-result" id="plan-result">
+      <h2>&#x1f4cb; 行程方案</h2>
+      <div class="plan-stats" id="plan-stats"></div>
+      <div class="plan-content" id="plan-content"></div>
+    </div>
+  </div>
+
+  <!-- History View -->
+  <div id="view-history" class="view">
+    <div id="history-list-container">
+      <h2 style="margin-bottom:16px;font-size:18px;color:var(--blue)">&#x1f4da; 行程历史</h2>
+      <div id="history-list" class="history-list"></div>
+    </div>
+    <div id="history-detail" style="display:none">
+      <button class="back-btn" onclick="showHistoryList()">&larr; 返回列表</button>
+      <div class="plan-result visible">
+        <h2>&#x1f4cb; 行程详情</h2>
+        <div class="plan-stats" id="detail-stats"></div>
+        <div class="plan-content" id="detail-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Powered by TravelClaw AI &middot; GLM-5.1</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script>
+// ── State ──
+let planning = false;
+let timerInterval = null;
+let startTime = 0;
+
+// ── Markdown renderer ──
+function renderMarkdown(text) {
+  if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+    return DOMPurify.sanitize(marked.parse(text || ''));
+  }
+  // Fallback: basic escaping + line breaks
+  return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+}
+
+// ── View Switching ──
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (name === 'history') loadHistory();
+}
+
+// ── Agent Card State ──
+const statusIcons = { working: '\u23f3', done: '\u2705', error: '\u274c' };
+
+function setCardState(agentId, state) {
+  const card = document.querySelector('[data-agent="' + agentId + '"]');
+  if (!card) return;
+  card.className = 'agent-card ' + state;
+  card.querySelector('.status-icon').textContent = statusIcons[state] || '';
+}
+
+function resetAllCards() {
+  document.querySelectorAll('.agent-card').forEach(c => {
+    c.className = 'agent-card';
+    c.querySelector('.status-icon').textContent = '';
+  });
+}
+
+// ── Timer ──
+function startTimer() {
+  startTime = Date.now();
+  const el = document.getElementById('status-text');
+  timerInterval = setInterval(() => {
+    const sec = Math.floor((Date.now() - startTime) / 1000);
+    el.textContent = '\u6b63\u5728\u89c4\u5212\u4e2d... \u5df2\u7528\u65f6 ' + sec + ' \u79d2';
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+// ── Status / Error ──
+function showStatus(text) {
+  const bar = document.getElementById('status-bar');
+  bar.classList.add('visible');
+  document.getElementById('status-text').textContent = text;
+}
+
+function hideStatus() {
+  document.getElementById('status-bar').classList.remove('visible');
+  stopTimer();
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = '\u274c ' + msg;
+  el.classList.add('visible');
+}
+
+function hideError() {
+  document.getElementById('error-msg').classList.remove('visible');
+}
+
+// ── Planning via WebSocket ──
+function startPlanning() {
+  const input = document.getElementById('request-input');
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  if (planning) return;
+
+  planning = true;
+  document.getElementById('btn-plan').disabled = true;
+  document.getElementById('plan-result').classList.remove('visible');
+  hideError();
+  resetAllCards();
+  showStatus('\u8fde\u63a5\u4e2d...');
+
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(proto + '//' + location.host + '/api/v1/plan/stream');
+
+  ws.onopen = () => {
+    showStatus('\u53d1\u9001\u8bf7\u6c42...');
+    ws.send(JSON.stringify({ request: text }));
+  };
+
+  ws.onmessage = (e) => {
+    const ev = JSON.parse(e.data);
+    switch (ev.type) {
+      case 'plan_start':
+        showStatus('\u89c4\u5212\u5f00\u59cb...');
+        startTimer();
+        break;
+      case 'decompose_start':
+        showStatus('\u6b63\u5728\u878d\u5408\u4e13\u5bb6\u77e5\u8bc6...');
+        break;
+      case 'agent_start':
+        setCardState(ev.agent_id, 'working');
+        break;
+      case 'agent_done':
+        setCardState(ev.agent_id, 'done');
+        break;
+      case 'agent_error':
+        setCardState(ev.agent_id, 'error');
+        break;
+      case 'plan_complete':
+        stopTimer();
+        hideStatus();
+        showPlanResult(ev.data);
+        break;
+      case 'plan_error':
+        stopTimer();
+        hideStatus();
+        showError(typeof ev.data === 'string' ? ev.data : JSON.stringify(ev.data));
+        break;
+      case 'error':
+        stopTimer();
+        hideStatus();
+        showError(typeof ev.data === 'string' ? ev.data : JSON.stringify(ev.data));
+        break;
+    }
+  };
+
+  ws.onerror = () => {
+    stopTimer();
+    hideStatus();
+    showError('WebSocket \u8fde\u63a5\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u670d\u52a1\u662f\u5426\u8fd0\u884c');
+  };
+
+  ws.onclose = () => {
+    planning = false;
+    document.getElementById('btn-plan').disabled = false;
+  };
+}
+
+// ── Show Plan Result ──
+function showPlanResult(data) {
+  const sec = (data.duration_ms / 1000).toFixed(1);
+  const agentNames = {
+    food: '\u7f8e\u98df', hotel: '\u4f4f\u5bbf', transport: '\u4ea4\u901a',
+    attraction: '\u666f\u70b9', shopping: '\u8d2d\u7269', entertainment: '\u5a31\u4e50'
+  };
+  const usedStr = (data.agents_used || []).map(a => agentNames[a] || a).join(' \u00b7 ');
+
+  document.getElementById('plan-stats').innerHTML =
+    '<span class="stat">\u23f1\ufe0f \u8017\u65f6 ' + sec + ' \u79d2</span>' +
+    '<span class="stat">\ud83d\udc65 \u53c2\u4e0e\u4e13\u5bb6: ' + usedStr + '</span>';
+  document.getElementById('plan-content').innerHTML = renderMarkdown(data.plan);
+  document.getElementById('plan-result').classList.add('visible');
+  document.getElementById('plan-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── History ──
+async function loadHistory() {
+  const container = document.getElementById('history-list');
+  try {
+    const res = await fetch('/api/v1/plans?user_id=anonymous');
+    const data = await res.json();
+    if (!data.trips || data.trips.length === 0) {
+      container.innerHTML = '<div class="history-empty">\ud83d\udced \u8fd8\u6ca1\u6709\u884c\u7a0b\u8bb0\u5f55\uff0c\u53bb\u89c4\u5212\u4e00\u4e2a\u5427\uff01</div>';
+      return;
+    }
+    container.innerHTML = data.trips.map(t => {
+      const date = new Date(t.created_at).toLocaleDateString('zh-CN');
+      const sec = t.duration_ms ? (t.duration_ms / 1000).toFixed(0) + '\u79d2' : '-';
+      return '<div class="history-card" onclick="loadTripDetail(\'' + t.id + '\')">' +
+        '<div class="info"><h3>' + (t.destination || '\u65c5\u884c\u89c4\u5212') + '</h3>' +
+        '<p>' + (t.days || '?') + '\u5929 \u00b7 ' + t.status + '</p></div>' +
+        '<div class="meta">' + date + '<br>\u8017\u65f6 ' + sec + '</div></div>';
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="history-empty">\u52a0\u8f7d\u5931\u8d25: ' + e.message + '</div>';
+  }
+  showHistoryList();
+}
+
+async function loadTripDetail(planId) {
+  document.getElementById('history-list-container').style.display = 'none';
+  document.getElementById('history-detail').style.display = 'block';
+  try {
+    const res = await fetch('/api/v1/plan/' + planId);
+    const trip = await res.json();
+    const sec = trip.duration_ms ? (trip.duration_ms / 1000).toFixed(1) + '\u79d2' : '-';
+    const agents = trip.agents_used ? trip.agents_used.join(' \u00b7 ') : '-';
+    document.getElementById('detail-stats').innerHTML =
+      '<span class="stat">\ud83d\udccd ' + (trip.destination || '-') + '</span>' +
+      '<span class="stat">\ud83d\udcc5 ' + (trip.days || '?') + '\u5929</span>' +
+      '<span class="stat">\u23f1\ufe0f ' + sec + '</span>';
+    document.getElementById('detail-content').innerHTML = renderMarkdown(trip.plan);
+  } catch (e) {
+    document.getElementById('detail-content').innerHTML = '<p>\u52a0\u8f7d\u5931\u8d25: ' + e.message + '</p>';
+  }
+}
+
+function showHistoryList() {
+  document.getElementById('history-list-container').style.display = 'block';
+  document.getElementById('history-detail').style.display = 'none';
+}
+
+// ── Enter key to submit ──
+document.getElementById('request-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    startPlanning();
+  }
+});
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from ..config import get_settings
 from ..logging_config import setup_logging
@@ -50,5 +51,13 @@ def create_app(config_path: str | None = None) -> FastAPI:
 
     app.include_router(router, prefix="/api/v1")
     app.include_router(ws_router, prefix="/api/v1")
+
+    # Serve frontend UI at root
+    _index_path = Path(__file__).resolve().parent.parent / "static" / "index.html"
+    _index_html = _index_path.read_text(encoding="utf-8") if _index_path.exists() else ""
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    async def index():
+        return _index_html
 
     return app
