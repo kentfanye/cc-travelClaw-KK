@@ -20,7 +20,7 @@ logger = logging.getLogger("travelclaw.agent")
 
 # GLM-5.1 (智谱AI) OpenAI兼容API
 _DEFAULT_API_BASE = "https://api.z.ai/api/coding/paas/v4"
-_DEFAULT_API_KEY = "41b233920baa4312aa379f5585e256ab.TlsvXDb2NW0DrOMW"
+_DEFAULT_API_KEY = "f1993fa5335b49398522d4d3004adaa6.RqMo0C8kAI2Ji44X"
 
 
 def _extract_reply(message) -> str:
